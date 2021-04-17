@@ -1,5 +1,7 @@
 ---
 title: "Rで始めるDocker生活"
+author: "eitsupi"
+date: "2021/04/17"
 output:
   revealjs::revealjs_presentation:
     theme: night
@@ -128,7 +130,7 @@ services:
         ports:
             - "8787:8787"
         volumes:
-            - ./rstudio_config:/home/rstudio/.config/rstudio
+            - ./.rstudio_config:/home/rstudio/.config/rstudio
             - ./work:/home/rstudio/work
 ```
 
