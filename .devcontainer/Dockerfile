@@ -1,6 +1,6 @@
 # R version: latest, ... ,4.0.1 , 4.0.0
 ARG VARIANT="latest"
-FROM rocker/r-ver:${VARIANT}
+FROM rocker/tidyverse:${VARIANT}
 
 # Use the [Option] comment to specify true/false arguments that should appear in VS Code UX
 #
@@ -10,7 +10,7 @@ ARG INSTALL_ZSH="true"
 ARG UPGRADE_PACKAGES="false"
 
 # Install needed packages and setup non-root user. Use a separate RUN statement to add your own dependencies.
-ARG USERNAME=vscode
+ARG USERNAME=rstudio
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 COPY library-scripts/*.sh /tmp/library-scripts/
