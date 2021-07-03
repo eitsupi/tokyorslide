@@ -34,6 +34,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 RUN install2.r  --error --skipinstalled --repos ${CRAN} --ncpus -1 \
         revealjs \
         xaringan \
+        xaringanthemer \
+    && install2.r --error --skipinstalled -r https://r-lib.github.io/p/pak/dev/ -n -1 \
+        pak \
     && rm -rf /tmp/downloaded_packages
 
 # [Optional] Uncomment this section to install additional OS packages.
