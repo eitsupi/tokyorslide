@@ -1,5 +1,6 @@
 ---
 title: "rocker/r-verとかのアップデートをちょっと自動化した話"
+subtitle: "第93回R勉強会 @ 東京（#TokyoR）"
 author: "eitsupi"
 date: "2021/07/03"
 output:
@@ -9,15 +10,15 @@ output:
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
-style_mono_accent(
-  base_color = "#1c5253",
+style_mono_accent_inverse(
+  base_color = "#3C989E",
   header_font_google = google_font("Josefin Sans"),
   text_font_google = google_font("Montserrat", "300", "300i"),
   code_font_google = google_font("Fira Mono")
 )
 ```
 
-# @eitsupi
+# [@eitsupi](https://twitter.com/eitsupi)
 
 .center[![eitsupi](./image/eitsupi.jpg)]
 
@@ -29,8 +30,9 @@ style_mono_accent(
 # Docker（Linuxコンテナ）を使うメリット
 
 - 環境構築かんたん。
-  - Dockerさえセットアップすればどのマシンでも同じように動く（多分）。
-- 日本語版WindowsでもShift-JISの呪いから解放される。
+  - Dockerさえセットアップすればどのマシンでも同じように動く。多分。
+  - 破棄も簡単。ライブラリの依存関係が壊れたらコンテナを捨てるだけ。
+- 日本語版WindowsでもShift-JISの呪いから解放される。重要。
 
 ---
 
@@ -49,7 +51,7 @@ tibble::tribble(
   "RStudio", "なし", "rocker/rstudio",
   "アーキテクチャ", "色々", "amd64のみ"
 ) |>
-knitr::kable("html")
+  knitr::kable("html")
 ```
 
 ---
@@ -87,7 +89,7 @@ READMEに書かれているように、だいたい以下のようなルール�
 
 ```{r}
 rversions::r_versions() |>
-tail()
+  tail()
 ```
 
 ---
@@ -98,8 +100,8 @@ Ubuntuがローカルに持っているcsvファイルから取得可能
 
 ```{r}
 read.csv("/usr/share/distro-info/ubuntu.csv") |>
-dplyr::select(version, series, release, eol, eol.esm) |>
-tail()
+  dplyr::select(version, series, release, eol, eol.esm) |>
+  tail()
 ```
 
 ---
@@ -110,7 +112,7 @@ Rのリリース日とUbuntuのコードネームで生成 |> `pak::repo_ping`�
 
 ```{r}
 "https://packagemanager.rstudio.com/cran/__linux__/focal/2021-05-17" |>
-(function(x) pak::repo_ping(cran_mirror = x, bioc = FALSE))()
+  (function(x) pak::repo_ping(cran_mirror = x, bioc = FALSE))()
 ```
 
 ---
@@ -119,14 +121,14 @@ Rのリリース日とUbuntuのコードネームで生成 |> `pak::repo_ping`�
 
 Gitのタグの情報をGitHub APIで取得 |> タグの打たれているコミットの日付を取得
 
-```{r, cache=TRUE, eval=FALSE}
+```{r, cache=TRUE, eval=TRUE}
 httr::GET(
   "https://api.github.com/repos/rstudio/rstudio/tags",
   httr::add_headers(accept = "application/vnd.github.v3+json"),
   query = list(per_page = 5)
 ) |>
-httr::content() |>
-(function(x) data.frame(version = purrr::map_chr(x, "name")))()
+  httr::content() |>
+  (function(x) data.frame(version = purrr::map_chr(x, "name")))()
 ```
 
 ---
@@ -135,17 +137,17 @@ httr::content() |>
 
 Gitのタグの情報をGitHub APIで取得 |> タグの打たれているコミットの日付を取得
 
-```{r, cache=TRUE, eval=FALSE}
+```{r, cache=TRUE, eval=TRUE}
 "https://api.github.com/repos/rstudio/rstudio/commits/df86b69ebdf62f1a9ed51af59c168572677541f1" |>
-httr::GET(httr::add_headers(accept = "application/vnd.github.v3+json")) |>
-httr::content() |>
-purrr::pluck("commit", "committer", "date") |>
-as.Date()
+  httr::GET(httr::add_headers(accept = "application/vnd.github.v3+json")) |>
+  httr::content() |>
+  purrr::pluck("commit", "committer", "date") |>
+  as.Date()
 ```
 
 ---
 
-# これらの処理をGitHubActionsで実行して自動PR作成！
+# これらの処理をGitHubActionsで定期実行させ自動PR作成！
 
 ```yaml
 jobs:
@@ -170,7 +172,7 @@ jobs:
 
 ---
 
-# マージされました
+# [マージされました](https://github.com/rocker-org/rocker-versioned2/pull/164)
 
 .center[![PullRequest](./image/pr164.png)]
 
@@ -178,5 +180,6 @@ jobs:
 
 # まとめ
 
-- 自動化楽しい
-- GitHubActionsすごい
+- 使ったことのないパッケージのことを色々知ることができた。作者の皆様に感謝。
+- GitHubActionsすごい。
+- 自動化楽しい。
