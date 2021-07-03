@@ -15,6 +15,7 @@
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -511,7 +512,7 @@ style.innerHTML = style_script;
 document.getElementsByTagName('head')[0].appendChild(style);
 </script>
 
-    <script src="site_libs/header-attrs-2.6/header-attrs.js"></script>
+    <script src="site_libs/header-attrs-2.9/header-attrs.js"></script>
 </head>
 <body>
   <div class="reveal">
@@ -576,14 +577,14 @@ document.getElementsByTagName('head')[0].appendChild(style);
 <h2>使い方</h2>
 <p>Dockerが使える状態なら、すぐにRStudioを使い始められます。</p>
 <p><a href="https://hub.docker.com/r/rocker/rstudio"><code>rocker/rstudio</code>のOverview</a>に載っている例。</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>$ <span class="ex">docker</span> run --rm -p 8787:8787 -e PASSWORD=yourpasswordhere rocker/rstudio</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">-p</span> 8787:8787 <span class="at">-e</span> PASSWORD=yourpasswordhere rocker/rstudio</span></code></pre></div>
 </section></section>
 <section>
 <section id="再現性-r4.0.0-12" class="title-slide slide level1">
 <h1>再現性 R4.0.0 (1/2)</h1>
 <p>rocker/r-verはRのバージョンに合った固定されたバージョンのパッケージをインストールします。</p>
 <p>試しに以下のようなコマンドで<code>rocker/r-ver:4.0.0</code>（R 4.0.0で固定）上にdplyrパッケージをインストールしてみましょう。</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>$ <span class="ex">docker</span> run --rm -it rocker/r-ver:4.0.0 Rscript -e <span class="st">&quot;install.packages(&#39;dplyr&#39;)&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">-it</span> rocker/r-ver:4.0.0 Rscript <span class="at">-e</span> <span class="st">&quot;install.packages(&#39;dplyr&#39;)&quot;</span></span></code></pre></div>
 </section>
 <section id="再現性-r4.0.0-22" class="slide level2">
 <h2>再現性 R4.0.0 (2/2)</h2>
@@ -594,7 +595,7 @@ document.getElementsByTagName('head')[0].appendChild(style);
 <section id="再現性-r4.0.4-12" class="slide level2">
 <h2>再現性 R4.0.4 (1/2)</h2>
 <p>次に、<code>rocker/r-ver:4.0.4</code>上にdplyrパッケージをインストールしてみましょう。</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>$ <span class="ex">docker</span> run --rm -it rocker/r-ver:4.0.4 Rscript -e <span class="st">&quot;install.packages(&#39;dplyr&#39;)&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> docker run <span class="at">--rm</span> <span class="at">-it</span> rocker/r-ver:4.0.4 Rscript <span class="at">-e</span> <span class="st">&quot;install.packages(&#39;dplyr&#39;)&quot;</span></span></code></pre></div>
 </section>
 <section id="再現性-r4.0.4-22" class="slide level2">
 <h2>再現性 R4.0.4 (2/2)</h2>
@@ -612,7 +613,7 @@ document.getElementsByTagName('head')[0].appendChild(style);
 <li>コンテナ内で作ったファイルをDockerホスト側のディレクトリに残したい場合は<code>-v</code>オプション等で永続化してやる必要があります。</li>
 </ul>
 <p><a href="https://hub.docker.com/r/rocker/rstudio"><code>rocker/rstudio</code>のOverview</a>に載っている例。</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>$ <span class="ex">docker</span> run -d -p 8787:8787 -v <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>:/home/rstudio -e PASSWORD=yourpasswordhere rocker/rstudio</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> docker run <span class="at">-d</span> <span class="at">-p</span> 8787:8787 <span class="at">-v</span> <span class="va">$(</span><span class="bu">pwd</span><span class="va">)</span>:/home/rstudio <span class="at">-e</span> PASSWORD=yourpasswordhere rocker/rstudio</span></code></pre></div>
 <!-- 個人的にはホームディレクトリに生成される余計なファイルまでホストに全部コピーされるので好きじゃないので、RStudioのプロジェクトに使うディレクトリ`work`だけ指定することが多いです。 -->
 <!-- ```bash -->
 <!-- $ docker run -d -p 8787:8787 -v $(pwd):/home/rstudio/work -e PASSWORD=yourpasswordhere rocker/rstudio -->
