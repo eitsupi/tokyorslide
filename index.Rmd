@@ -2,5 +2,5 @@
 title: "TokyoR用スライド置き場"
 ---
 
-[第91回R勉強会@東京（#TokyoR） LT Rから始めるDocker生活](./tokyor_91lt_docker.html)
-[第93回R勉強会@東京（#TokyoR） LT Rから始めるDocker生活](./tokyor_93lt_rocker.html)
+- [第91回R勉強会@東京（#TokyoR） LT Rから始めるDocker生活](./tokyor_91lt_docker.html)
+- [第93回R勉強会@東京（#TokyoR） LT Rから始めるDocker生活](./tokyor_93lt_rocker.html)
