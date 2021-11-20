@@ -1,9 +1,2 @@
-name: "tokyorslide"
-navbar:
-  title: "tokyorslide"
-  left:
-    - text: "Home"
-      href: index.html
-output:
-  html_document:
-output_dir: "docs"
+name: tokyorslide
+output_dir: docs
