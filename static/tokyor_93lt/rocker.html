@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>rocker/r-verとかのアップデートをちょっと自動化した話</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="eitsupi" />
+    <script src="rocker_files/header-attrs-2.11/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# rocker/r-verとかのアップデートをちょっと自動化した話
+## 第93回R勉強会 @ 東京（#TokyoR）
+### eitsupi
+### 2021-07-03 (updated:2021-11-30)
+
+---
+
+
+
+
+# [@eitsupi](https://twitter.com/eitsupi)
+
+.center[![eitsupi](./image/eitsupi.jpg)]
+
+- R歴二年くらい
+- Docker歴一年くらい
+
+---
+
+# Docker（Linuxコンテナ）を使うメリット
+
+- 環境構築かんたん。
+  - Dockerさえセットアップすればどのマシンでも同じように動く。多分。
+  - 破棄も簡単。ライブラリの依存関係が壊れたらコンテナを捨てるだけ。
+- 日本語版WindowsでもShift-JISの呪いから解放される。重要。
+
+---
+
+# rocker/r-verとは？
+
+- （後述の派生含めて）よく使われるRのコンテナイメージのひとつ
+- GitHubリポジトリは[rocker-org/rocker-versioned2](https://github.com/rocker-org/rocker-versioned2)
+- Docker Official Imagesの[r-base](https://hub.docker.com/_/r-base)との比較
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; 観点 &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; r-base &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; rocker/r-ver &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; ベースイメージ &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Debian &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Ubuntu &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Rパッケージ &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ソースインストール（遅い） &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; バイナリインストール（速い） &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Rパッケージ固定 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; なし &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; あり（後述） &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; RStudio &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; なし &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; rocker/rstudio &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; アーキテクチャ &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 色々 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; amd64のみ &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# rocker/r-verのレシピ
+
+`rocker/r-ver`は再現性を重視しており、古いバージョンのRのイメージでは「そのバージョンのRが最新だった時代のパッケージをインストールする」という挙動をとる。
+
+これはほぼ毎日CRANのミラーを取得しているRSPM（R3.6.3以前はMRAN）の特定の日付のミラーをCRANとして使用することで実現している。
+
+READMEに書かれているように、だいたい以下のようなルールでDockefileが作られている。
+
+1. そのバージョンのRがリリースされた時点で最新のUbuntu LTSをベースにする。
+2. そのバージョンのRが最新だった最後の日のRSPMのCRANミラーをデフォルトのRパッケージリポジトリにする。
+3. （明言されていないが）RStudioもそのバージョンのRが最新だったときの最新バージョンで固定する。
+
+---
+
+# 問題
+
+- RやRStudioのリリース時に手作業でDockefileのアップデートやイメージのビルドを行っているため最新バージョンをすぐに試せない
+- 手動編集による変数の設定ミス多発（CRANのスナップショットが本来の日付の一年前だったり……）
+
+---
+
+# 自動化したい！
+
+誰が設定しても同じ値になるようなレシピなのだから自動化できるはず！
+
+---
+
+# Rのリリース日
+
+`rversions::r_versions`関数によりRのSVNリポジトリ &lt;https://svn.r-project.org/R/tags/&gt; から良い感じに取得可能（よく分かってません……）
+
+
+```r
+rversions::r_versions() |&gt;
+  tail()
+```
+
+```
+##     version                date                nickname
+## 120   4.0.3 2020-10-10 07:05:24 Bunny-Wunnies Freak Out
+## 121   4.0.4 2021-02-15 08:05:13       Lost Library Book
+## 122   4.0.5 2021-03-31 07:05:15         Shake and Throw
+## 123   4.1.0 2021-05-18 07:05:22         Camp Pontanezen
+## 124   4.1.1 2021-08-10 07:05:06             Kick Things
+## 125   4.1.2 2021-11-01 08:05:12             Bird Hippie
+```
+
+---
+
+# Ubuntu LTSのリリース日
+
+Ubuntuがローカルに持っているcsvファイルから取得可能
+
+
+```r
+read.csv("/usr/share/distro-info/ubuntu.csv") |&gt;
+  dplyr::select(version, series, release, eol, eol.esm) |&gt;
+  tail()
+```
+
+```
+##      version  series    release        eol    eol.esm
+## 31     19.10    eoan 2019-10-17 2020-07-17           
+## 32 20.04 LTS   focal 2020-04-23 2025-04-23 2030-04-23
+## 33     20.10  groovy 2020-10-22 2021-07-22           
+## 34     21.04 hirsute 2021-04-22 2022-01-20           
+## 35     21.10  impish 2021-10-14 2022-07-14           
+## 36 22.04 LTS   jammy 2022-04-21 2027-04-21 2032-04-21
+```
+
+---
+
+# CRANミラー
+
+Rのリリース日とUbuntuのコードネームで生成 |&gt; `pak::repo_ping`関数で有効性確認
+
+
+```r
+"https://packagemanager.rstudio.com/cran/__linux__/focal/2021-05-17" |&gt;
+  (function(x) pak::repo_ping(cran_mirror = x, bioc = FALSE))()
+```
+
+```
+## Repository summary:                 source          
+## CRAN @ packagemanager.rstudio.com     ✔      (935ms)
+```
+
+---
+
+# RStudio Serverのリリース日
+
+Gitのタグの情報をGitHub APIで取得 |&gt; タグの打たれているコミットの日付を取得
+
+
+```r
+httr::GET(
+  "https://api.github.com/repos/rstudio/rstudio/tags",
+  httr::add_headers(accept = "application/vnd.github.v3+json"),
+  query = list(per_page = 5)
+) |&gt;
+  httr::content() |&gt;
+  (function(x) data.frame(version = purrr::map_chr(x, "name")))()
+```
+
+```
+##          version
+## 1 v2021.09.1+372
+## 2 v2021.09.0+351
+## 3      v1.4.1717
+## 4      v1.4.1106
+## 5      v1.4.1103
+```
+
+---
+
+# RStudio Serverのリリース日
+
+Gitのタグの情報をGitHub APIで取得 |&gt; タグの打たれているコミットの日付を取得
+
+
+```r
+"https://api.github.com/repos/rstudio/rstudio/commits/df86b69ebdf62f1a9ed51af59c168572677541f1" |&gt;
+  httr::GET(httr::add_headers(accept = "application/vnd.github.v3+json")) |&gt;
+  httr::content() |&gt;
+  purrr::pluck("commit", "committer", "date") |&gt;
+  as.Date()
+```
+
+```
+## [1] "2021-05-24"
+```
+
+---
+
+# これらの処理をGitHubActionsで定期実行させ自動PR作成！
+
+```yaml
+jobs:
+  createPullRequest:
+    container:
+      image: rocker/tidyverse:latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: install2.r --error --skipinstalled -r https://r-lib.github.io/p/pak/dev/ -n -1 pak
+      - run: ./make-stacks.R
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Automatic update of container definition files
+          branch: auto-detected-updates
+          delete-branch: true
+          title: 'Automatic update of container definition files'
+          body: |
+            - Auto-generated by [create-pull-request][1]
+            [1]: https://github.com/peter-evans/create-pull-request
+```
+
+---
+
+# [マージされました](https://github.com/rocker-org/rocker-versioned2/pull/164)
+
+.center[![PullRequest](./image/pr164.png)]
+
+---
+
+# まとめ
+
+- 使ったことのないパッケージのことを色々知ることができた。作者の皆様に感謝。
+- GitHubActionsすごい。
+- 自動化楽しい。
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
