@@ -2,7 +2,7 @@
 title: "rocker/r-verとかのアップデートをちょっと自動化した話"
 subtitle: "第93回R勉強会 @ 東京（#TokyoR）"
 author: "eitsupi"
-date: "2021/07/03"
+date: "2021-07-03 (updated:`r Sys.Date()`)"
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css

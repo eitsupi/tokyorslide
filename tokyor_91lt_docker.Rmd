@@ -1,7 +1,7 @@
 ---
 title: "Rで始めるDocker生活"
 author: "eitsupi"
-date: "2021/04/17"
+date: "2021-04-17 (updated:`r Sys.Date()`)"
 output:
   revealjs::revealjs_presentation:
     theme: night
