@@ -35,6 +35,9 @@ RUN install2.r  --error --skipinstalled --ncpus -1 \
         revealjs \
         xaringan \
         xaringanthemer \
+        ragg \
+        showtext \
+        ggdag \
     && install2.r --error --skipinstalled -r https://r-lib.github.io/p/pak/dev/ -n -1 \
         pak \
     && rm -rf /tmp/downloaded_packages
