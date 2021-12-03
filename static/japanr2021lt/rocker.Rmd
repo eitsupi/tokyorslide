@@ -8,6 +8,8 @@ output:
     css: xaringan-themer.css
     nature:
       ratio: "16:9"
+      highlightLanguage: shell
+      highlightStyle: sunburst
 ---
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
@@ -260,8 +262,7 @@ https://github.com/rocker-org/rocker-versioned2/pull/179
 
 --
 
-⇒ ローカルでもコマンド一つで実行可能、  
-　 GitHub Actionsのワークフロー定義も単純化できた
+⇒ ローカルでもコマンド一つで実行可能、GitHub Actionsのワークフロー定義も単純化できた
 
 ---
 
