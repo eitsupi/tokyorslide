@@ -6,6 +6,8 @@ date: "2021/12/04"
 output:
   xaringan::moon_reader:
     css: xaringan-themer.css
+    nature:
+      ratio: "16:9"
 ---
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
@@ -43,25 +45,25 @@ library(ggdag)
 ---
 
 # 今年やったこと
-
+.pull-left[
 1. [VS Code Remote-Containers用R定義](https://github.com/microsoft/vscode-dev-containers/tree/main/containers/r)の整備
 2. [rocker/r-ver](https://hub.docker.com/r/rocker/r-ver)一族のビルドシステム大改修
   1. Dockerfileの自動更新機能追加
   2. 全ビルドをGitHub Actions上で実行
   3. タグの拡充
-  4. マルチアーキテクチャビルド（arm64ビルドの追加）
-  5. ビルドされたイメージに関するレポートの自動公開機能追加
+  4. arm64ビルドの追加
+  5. レポート自動公開機能追加
 3. Tokyo.RでLTを二回（※Dockerネタ）
-
+]
 --
+.pull-right[
+<img src="./image/contributors.png" style="width: 100%" />
 
-.center[<img src="./image/contributors.png" style="width: 35%" />]
-
-`rocker/r-ver`のリポジトリにPR出し過ぎてコミット数一位に。。。
-
+`rocker/r-ver`にPR出し過ぎてコミット数一位に。。。
+]
 ---
 
-# Docker（Linuxコンテナ）の<br>メリット
+# Docker（Linuxコンテナ）のメリット
 
 - 環境構築かんたん
   - Dockerさえセットアップすればどのマシンでも同じように動く（多分）
@@ -76,7 +78,7 @@ library(ggdag)
 - GitHubリポジトリは[rocker-org/rocker-versioned2](https://github.com/rocker-org/rocker-versioned2)
 - **再現性の重視が特徴**で、特定の日付のCRANのスナップショットからパッケージをインストールする
   - 参考：https://journal.r-project.org/archive/2017/RJ-2017-065/index.html
-- Docker Official Images [r-base](https://hub.docker.com/_/r-base)と比較すると表のような差異（2021年1月時点）
+- Docker Official Images [r-base](https://hub.docker.com/_/r-base)と比較すると表のような差異
   - なお[r-base](https://hub.docker.com/_/r-base)のソースコードは[rocker/r-base](https://hub.docker.com/r/rocker/r-base)と同じ
 
 ```{r, echo=FALSE}
@@ -94,17 +96,22 @@ df_about_rver |>
 ---
 
 # rocker/r-ver一族
-
-WebベースのIDEであるRStudio Serverをインストールした[rocker/rstudio](https://hub.docker.com/r/rocker/rstudio)、  
+.pull-left[
+RStudio Serverをインストールした[rocker/rstudio](https://hub.docker.com/r/rocker/rstudio)、  
 その上にtidyverseパッケージをインストールした[rocker/tidyverse](https://hub.docker.com/r/rocker/tidyverse)など、  
 Rockerプロジェクト内だけでも多くのイメージに派生
+]
 
-```{r dag, cache=TRUE, echo=FALSE, fig.align="center", fig.height=6, fig.width=12, dev="svg"}
-set.seed(3)
+--
+
+.pull-right[
+```{r dag, cache=TRUE, echo=FALSE, dev="svg"}
+set.seed(1)
 ggdag::dag('
   "r-ver" -> rstudio -> tidyverse -> verse -> geospatial -> binder
-  "r-ver" -> shiny -> shinyverse
+  "r-ver" -> shiny -> "shiny-verse"
   "r-ver" -> cuda -> ml -> mlverse
+  "cuda11.1" -> "ml11.1" -> "mlverse11.1"
 ') |>
   tidy_dagitty() |>
   ggplot(aes(x, y, xend = xend, yend = yend)) +
@@ -120,6 +127,7 @@ ggdag::dag('
     legend.position = "none"
   )
 ```
+]
 
 ---
 
@@ -138,7 +146,7 @@ docker pull rocker/r-ver:latest
 
 現実 https://github.com/rocker-org/rocker-versioned2/issues/125
 
-![4.0.3vslatest](./image/4.0.3vslatest.png)
+.center[<img src="./image/4.0.3vslatest.png" style="width: 65%" />]
 
 --
 
@@ -271,7 +279,7 @@ https://github.com/rocker-org/rocker-versioned2/pull/179
 --
 
 1. docker-bake.jsonに書かれたタグを全部pullする
-2. 全イメージに対して各種コマンドを実行して情報をファイルに吐かせる
+2. pullした全イメージに対して各種コマンドを実行して情報をファイルに吐かせる
 3. 吐かせた情報の書き込まれたファイルをRMarkdown上で読んでデータ処理
 4. Markdownファイルとして出力、レポート完成、wikiに登録
 
@@ -281,7 +289,7 @@ https://github.com/rocker-org/rocker-versioned2/pull/179
 
 --
 
-このシステムの動き出したR4.1.0リリース以降のイメージはwikiから遡れるはず……  
+このシステムの動き出したR 4.1.0リリース日以降のイメージはwikiから探せるはず……  
 https://github.com/rocker-org/rocker-versioned2/wiki
 
 ---
@@ -289,7 +297,7 @@ https://github.com/rocker-org/rocker-versioned2/wiki
 # 最新の成果
 
 - R 4.1.2リリース当日11月1日に`rocker/r-ver:4.1.2`公開
-  - 定義ファイル自動更新のPullRequest  
+  - 定義ファイルを更新するPullRequestがGitHub Actionsにより自動作成された  
   https://github.com/rocker-org/rocker-versioned2/pull/278
   - ビルドされたイメージのレポート（amd64とarm64があることを明記）  
   https://github.com/rocker-org/rocker-versioned2/wiki/r-ver_e90e4d47eb34
@@ -308,7 +316,16 @@ https://github.com/rocker-org/rocker-versioned2/wiki
 
 --
 
-やろうと思っていたビルドシステムの改善は実現できたので、  
-後はシステムがちゃんと動き続けるか見守りたいと思います  
-（RStudioのバージョン名変更とURL変更により直近二回のアップデート連敗）  
+やろうと思っていたビルドシステムの改善は実現できたので、後はシステムが動き続けるのを見守りたいと思います
+
+--
+
+（RStudioのバージョン名変更とURL変更により直近二回のアップデート連敗）
+
+--
+
 （12月2日にRStudio Public Package Manager止まって予期せぬ動作発生）
+
+--
+
+<div style="text-align: right; font-weight: bold"> つづく </div>
