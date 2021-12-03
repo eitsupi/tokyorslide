@@ -1,0 +1,144 @@
+---
+title: "Rで始めるDocker生活"
+author: "eitsupi"
+date: "2021-04-17 (updated:`r Sys.Date()`)"
+output:
+  revealjs::revealjs_presentation:
+    theme: night
+    highlight: zenburn
+    reveal_options:
+      slideNumber: true
+---
+
+# はじめに
+
+<style type="text/css">
+    .reveal p {
+      text-align: left;
+    }
+</style>
+
+## @eitsupi
+
+<center>
+![eitsupi](../image/eitsupi.jpg)
+</center>
+
+- R歴二年くらい
+- Docker歴半年くらい
+  - [データサイエンス100本ノック（構造化データ加工編）](https://github.com/The-Japan-DataScientist-Society/100knocks-preprocess)でDockerに初めて触る。
+- 今回初めてRMarkdownでスライド作ってみて泣きそうになっています、今……。
+
+## Docker（Linuxコンテナ）を使うメリット
+
+- 環境構築かんたん。
+  - Dockerさえセットアップすればどのマシンでも同じように動く（多分）。
+- 日本語版WindowsでもShift-JISの呪いから解放される。
+
+# Rocker project
+
+- [公式サイト](https://www.rocker-project.org/)
+- R用のDockerイメージを作成・維持しているプロジェクト。
+
+## rocker/r-ver
+
+- [GitHubリポジトリ](https://github.com/rocker-org/rocker-versioned2)
+- Rの再現性を重視したDockerイメージで、特別な操作をしなくてもRパッケージのバージョンを固定するようになっています。
+- よく使われている[rocker/tidyverse](https://hub.docker.com/r/rocker/tidyverse)は、[rocker/r-ver](https://hub.docker.com/r/rocker/r-ver)にRStudio Serverとtidyverseをインストールしたもの。
+
+## 使い方
+
+Dockerが使える状態なら、すぐにRStudioを使い始められます。
+
+[`rocker/rstudio`のOverview](https://hub.docker.com/r/rocker/rstudio)に載っている例。
+
+```bash
+$ docker run --rm -p 8787:8787 -e PASSWORD=yourpasswordhere rocker/rstudio
+```
+
+# 再現性 R4.0.0 (1/2)
+
+rocker/r-verはRのバージョンに合った固定されたバージョンのパッケージをインストールします。
+
+試しに以下のようなコマンドで`rocker/r-ver:4.0.0`（R 4.0.0で固定）上にdplyrパッケージをインストールしてみましょう。
+
+```bash
+$ docker run --rm -it rocker/r-ver:4.0.0 Rscript -e "install.packages('dplyr')"
+```
+
+## 再現性 R4.0.0 (2/2)
+
+以下のようにインストールが進行します。
+
+```r
+trying URL 'https://packagemanager.rstudio.com/cran/__linux__/focal/291/src/contrib/dplyr_1.0.0.tar.gz'
+```
+
+dplyr1.0.0がインストールされているのが分かります。
+
+## 再現性 R4.0.4 (1/2)
+
+次に、`rocker/r-ver:4.0.4`上にdplyrパッケージをインストールしてみましょう。
+
+```bash
+$ docker run --rm -it rocker/r-ver:4.0.4 Rscript -e "install.packages('dplyr')"
+```
+
+## 再現性 R4.0.4 (2/2)
+
+```r
+trying URL 'https://packagemanager.rstudio.com/cran/__linux__/focal/2021-03-30/src/contrib/dplyr_1.0.5.tar.gz'
+```
+
+今度はdplyr1.0.5がインストールされました。
+
+このように、インストールされているRにあったバージョンのライブラリをインストールするように設定されています。
+
+毎日CRANのスナップショットを保存しそれを提供している、RStudio Package Managerにより実現されています。  
+毎日のコピーを保存しているなんてすごい！
+
+# ソースコードの永続化
+
+- コンテナ内で行った変更は（良くも悪くも）コンテナ内だけのもの。
+- コンテナ内で作ったファイルをDockerホスト側のディレクトリに残したい場合は`-v`オプション等で永続化してやる必要があります。
+
+[`rocker/rstudio`のOverview](https://hub.docker.com/r/rocker/rstudio)に載っている例。
+
+```bash
+$ docker run -d -p 8787:8787 -v $(pwd):/home/rstudio -e PASSWORD=yourpasswordhere rocker/rstudio
+```
+
+<!-- 個人的にはホームディレクトリに生成される余計なファイルまでホストに全部コピーされるので好きじゃないので、RStudioのプロジェクトに使うディレクトリ`work`だけ指定することが多いです。 -->
+
+<!-- ```bash -->
+<!-- $ docker run -d -p 8787:8787 -v $(pwd):/home/rstudio/work -e PASSWORD=yourpasswordhere rocker/rstudio -->
+<!-- ``` -->
+
+## RStudio設定の永続化
+
+- RStudio Serverの設定は`~/.config/rstudio`に保管されます(※1.4以降)。
+- このディレクトリを永続化してやればコンテナを作り直しても設定が保持される！
+- docker-composeを使うのなら複数のオプション設定もかんたん。
+
+```docker-compose.yml
+version: '3'
+services:
+    rstudio:
+        image: rockerjp/tidyverse
+        environment:
+            - PASSWORD=yourpasswordhere
+        ports:
+            - "8787:8787"
+        volumes:
+            - ./.rstudio_config:/home/rstudio/.config/rstudio
+            - ./work:/home/rstudio/work
+```
+
+# おわりに
+
+文字化けで辛くなったとき、  
+環境設定に疲れたとき、  
+Linux版のRを試したくなったとき、  
+もしくは文字化けで辛くなったとき、
+
+Dockerのことを思い出して下さい。
