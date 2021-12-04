@@ -4,8 +4,8 @@ on:
     branches:
       - main
     paths:
-      - content
-      - static
+      - "content/**"
+      - "static/**"
   workflow_dispatch:
 
 jobs:
