@@ -30,7 +30,7 @@ class: center, middle, inverse, title-slide
 - [@eitsupi](https://twitter.com/eitsupi)
 - 製造業勤務
 - R歴二年半くらい
-  - Excelやローコードツールを使った結果、ソースコードをバージョン管理できることの意義を感じてRを使い始めた
+  - Excelやローコードツールを触った後、ソースコードをGitで管理できることの意義を感じてRを使い始めた
 - Docker歴一年半
   - WSL2バックエンドのDocker Desktop for Windowsから入った
   - Dockerを触るようになってLinuxに割と慣れた
@@ -52,7 +52,7 @@ class: center, middle, inverse, title-slide
 .pull-right[
 &lt;img src="./image/contributors.png" style="width: 100%" /&gt;
 
-`rocker/r-ver`にPR出し過ぎてコミット数一位に。。。
+`rocker/r-ver`にPR出し過ぎてコミット数一位に……
 ]
 ---
 
@@ -118,8 +118,7 @@ Rockerプロジェクト内だけでも多くのイメージに派生
 
 ---
 
-ところで、RやRStudioの新バージョンがリリースされたら  
-すぐに試したくなりませんか？
+ところで、RやRStudioの新バージョンがリリースされたらすぐに試したくなりませんか？
 
 --
 
@@ -170,8 +169,7 @@ docker pull rocker/r-ver:latest
 
 # Dockerfileを自動更新したい！
 
-Dockerfileに含まれる変数（ソフトウェアのバージョン指定など）を  
-自動取得する必要あり
+Dockerfileに含まれる変数（ソフトウェアのバージョン指定など）を自動取得する必要あり
 
 --
 
@@ -191,7 +189,7 @@ Dockerfileに含まれる変数（ソフトウェアのバージョン指定な�
 
 ---
 
-# GitHub Actionsで&lt;br&gt;Dockerビルドしたい！
+# GitHub ActionsでDockerビルドしたい！
 
 --
 
@@ -228,7 +226,7 @@ https://github.com/rocker-org/rocker-versioned2/pull/179
 
 ---
 
-# docker-bake.json
+# ……docker-bake.json???
 
 --
 
@@ -238,7 +236,7 @@ https://github.com/rocker-org/rocker-versioned2/pull/179
 --
 
 - `buildx bake`コマンドは指定されたすべてのターゲットを同時にビルドするため  
-  コマンド一発では**依存関係のあるイメージを順番にビルドできない**（※v0.7時点）
+  コマンド一発では**依存関係のあるイメージを順番にビルドできない**（※buildx 0.7.1時点）
 
 --
 
@@ -314,7 +312,7 @@ https://github.com/rocker-org/rocker-versioned2/wiki
 
 --
 
-&lt;div style="text-align: right; font-weight: bold"&gt; つづく &lt;/div&gt;
+&lt;div style="text-align: right; font-weight: bold"&gt; Enjoy! &lt;/div&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
