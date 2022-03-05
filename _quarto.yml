@@ -2,7 +2,7 @@ project:
   type: website
   output-dir: docs
   render:
-      - "!*.Rmd"
+    - "*.qmd"
   resources:
     - image
     - tokyor_91lt
@@ -16,7 +16,6 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
 
 format:
   html:
