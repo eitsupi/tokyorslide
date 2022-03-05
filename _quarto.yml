@@ -1,0 +1,23 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - "*.qmd"
+  resources:
+    - image
+    - tokyor_91lt
+    - tokyor_93lt
+    - japanr2021lt
+
+website:
+  title: "tokyo-r-slide"
+  navbar:
+    background: primary
+    left:
+      - href: index.qmd
+        text: Home
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
