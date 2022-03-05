@@ -10,14 +10,23 @@ project:
     - japanr2021lt
 
 website:
-  title: "tokyo-r-slide"
+  title: TokyoR用スライド置き場
+  description: TokyoR用の資料を置くサイト
   navbar:
     background: primary
     left:
       - href: index.qmd
         text: Home
+    right:
+      - icon: twitter
+        href: https://twitter.com/eitsupi
+      - icon: github
+        href: https://github.com/eitsupi
+  repo-url: https://github.com/eitsupi/tokyorslide
+  repo-actions: source
 
 format:
   html:
-    theme: cosmo
-    css: styles.css
+    theme:
+      light: flatly
+      dark: darkly
