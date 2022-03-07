@@ -1,0 +1,219 @@
+---
+title: "Apache Arrow 鬼はええ！"
+subtitle: "このままCSV全部Parquetに変換していこうぜ！"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#TokyoR"
+    self-contained: false
+engine: knitr
+---
+
+# はじめに
+
+## 自己紹介
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+- [@eitsupi](https://twitter.com/eitsupi)
+- 製造業勤務
+- Dockerイメージ`rocker/r-ver`他のメンテナー
+
+## 今日の話……
+
+:::: {.columns}
+::: {.column width="50%"}
+### 対象かも
+
+✅データはCSVファイル  
+✅大量のファイルを読む  
+✅読み込みに数十分かかる
+:::
+
+::: {.column width="50%"}
+### 対象外かも
+
+✅データはDB上  
+✅少数のファイルを読む  
+✅読み込みは数秒で終わる
+:::
+::::
+
+## 結論
+
+Q. CSVをParquetにするとどのくらい早くなる？
+
+A. 場合による。
+
+# Apache Arrowについて
+
+## Apache Arrowプロジェクト
+
+## インメモリフォーマット
+
+## Apache Parquet
+
+## Arrow R Package
+
+# `arrow`によるファイル読み込み
+
+## ファイルの読み書き
+
+`arrow`パッケージは独自にファイルを読み書きする関数を持っている。  
+他パッケージとの対応関係は以下の通り。
+
+| 対象ファイル | 数   |  utils   |                               readr                               |                                       arrow                                       |
+| ------------ | ---- | :------: | :---------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
+| csv          | 単体 | read.csv | [read_csv](https://readr.tidyverse.org/reference/read_delim.html) | [read_csv_arrow](https://arrow.apache.org/docs/r/reference/read_delim_arrow.html) |
+| csv          | 複数 |    -     |                             read_csv                              |    [open_dataset](https://arrow.apache.org/docs/r/reference/open_dataset.html)    |
+| parquet      | 単体 |    -     |                                 -                                 |    [read_parquet](https://arrow.apache.org/docs/r/reference/read_parquet.html)    |
+| parquet      | 複数 |    -     |                                 -                                 |                                   open_dataset                                    |
+
+## CSVの読み込み　1/3
+
+```{r}
+#| echo: true
+#| code-line-numbers: "|4"
+file_csv <- readr::readr_example("mtcars.csv")
+
+file_csv |>
+  arrow::read_csv_arrow(as_data_frame = FALSE)
+```
+
+::: {.incremental}
+- `as_data_frame`引数はRの`data.frame`に変換するか`arrow::Table`のままにするかを制御する。（デフォルトは`TRUE`）
+:::
+
+## CSVの読み込み　2/3
+
+同じ列構造を持つ複数ファイルを読み込みたい場合は`open_dataset()`によりデータセットとして開く。
+
+```{r}
+#| echo: true
+c(file_csv, file_csv) |> arrow::open_dataset(format = "csv")
+```
+
+この段階では矩形データの構造（スキーマ）を読み込んだだけで、データ全体を読み込んではいない。
+
+## CSVの読み込み　3/3
+
+`compute`か`collect`でデータをメモリ上に読み込む。
+
+```{r}
+#| echo: true
+ds <- c(file_csv, file_csv) |> arrow::open_dataset(format = "csv")
+```
+
+::::{.columns}
+:::{.column width="50%"}
+
+### Table
+
+```{r}
+#| echo: true
+ds |> dplyr::compute()
+```
+
+:::
+:::{.column width="50%"}
+
+### data.frame
+
+```{r}
+#| echo: true
+ds |> dplyr::collect()
+```
+:::
+::::
+
+## Parquetファイルの読み込み　1/2
+
+`write_parquet`でParquetファイルを書き込んで、`read_parquet`で読み込む。
+
+```{r}
+#| echo: true
+readr::readr_example("mtcars.csv") |>
+  arrow::read_csv_arrow(as_data_frame = FALSE) |>
+  arrow::write_parquet("mtcars.parquet")
+
+arrow::read_parquet("mtcars.parquet", as_data_frame = FALSE)
+```
+
+## Parquetファイルの読み込み　2/2
+
+Parquetの場合も複数ファイルの場合は`open_dataset`で開く。`format`引数のデフォルトは`"parquet"`なので指定しなくてもよい。
+
+```{r}
+#| echo: true
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::compute()
+```
+
+# dplyr query
+
+## 遅延評価 {auto-animate="true"}
+
+データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+
+```r
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::collect()
+```
+
+## 遅延評価 {auto-animate="true"}
+
+データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+
+```{.r code-line-numbers="|3-4"}
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::filter(cyl == 4) |>
+  dplyr::select(dplyr::starts_with("d")) |>
+  dplyr::collect()
+```
+
+::: {.incremental}
+- dplyrクエリはarrowパッケージによって翻訳されlibarrowがクエリを実行する。
+- 翻訳可能な関数はarrowに登録されているもののみなので、非対応の関数を含めるとエラーになる。
+- 対応している関数は徐々に増えており、[NEWS](https://arrow.apache.org/docs/r/news/index.html)で確認可能。
+:::
+
+## 遅延評価 {auto-animate="true"}
+
+データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+
+```{.r code-line-numbers="1-2"}
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::filter(cyl == 4) |>
+  dplyr::select(dplyr::starts_with("d")) |>
+  dplyr::collect()
+```
+
+- Parquetファイルに対してクエリを実行するとき、クエリを解析し必要な列と行のみをファイルから読み込む（プッシュダウン）。
+
+## 遅延評価 {auto-animate="true"}
+
+データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+
+```{r}
+#| echo: true
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::filter(cyl == 4) |>
+  dplyr::select(dplyr::starts_with("d")) |>
+  dplyr::collect()
+```
+
+<!-- clean up -->
+
+```{r}
+fs::file_delete("mtcars.parquet")
+```
