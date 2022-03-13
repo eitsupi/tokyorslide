@@ -18,7 +18,7 @@ engine: knitr
 
 ## 自己紹介
 
-![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+![icon](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
 
 - [@eitsupi](https://twitter.com/eitsupi)
 - 製造業勤務
@@ -26,21 +26,26 @@ engine: knitr
 
 ## 今日の話……
 
+数十分かけて読み込んでいたCSVファイルをParquetに置換してみたら数分で読めるようになったのでその際に調べたこと中心。
+
 :::: {.columns}
 ::: {.column width="50%"}
+
 ### 対象かも
 
 ✅データはCSVファイル  
 ✅大量のファイルを読む  
 ✅読み込みに数十分かかる
-:::
 
+:::
 ::: {.column width="50%"}
+
 ### 対象外かも
 
 ✅データはDB上  
 ✅少数のファイルを読む  
 ✅読み込みは数秒で終わる
+
 :::
 ::::
 
@@ -48,17 +53,45 @@ engine: knitr
 
 Q. CSVをParquetにするとどのくらい早くなる？
 
-A. 場合による。
+A. 場合による。（ようなので試してみてください！）
 
-# Apache Arrowについて
-
-## Apache Arrowプロジェクト
-
-## インメモリフォーマット
+# Apache Parquet と<br/>Apache Arrow
 
 ## Apache Parquet
 
+- 2013年～[^1]
+- Apache Hadoop用に作られた**列指向**の**ファイルフォーマット**
+  - 列方向に圧縮されるため大量のレコードを圧縮しやすい
+  - 列単位でベクトル化した計算を行う分析処理と相性が良い
+
+[^1]: 
+[Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
+
+## Apache Arrow
+
+- 2016年～[^2]
+- _A high-performance cross-system data layer for columnar in-memory analytics_
+- 言語に寄らない**列指向**の**インメモリフォーマット**の標準を目指しているプロジェクト
+  - Arrowを介することで、ある列指向データから別の列指向データへの変換を個別に実装する必要はなくなる
+
+[^2]: [The Apache® Software Foundation Announces Apache Arrow™ as a Top-Level Project](https://blogs.apache.org/foundation/entry/the_apache_software_foundation_announces87)
+
+## ParquetとFeather
+
+- 2016年時点でArrowはファイル形式を提供しなかったため、ファイル形式およびそのファイルを読み書きする[Featherライブラリ](https://github.com/wesm/feather)が試験的に作られる
+- 2020年にArrow IPC (Inter-Process Communication)フォーマットをLZ4かZSTDで圧縮した通称FeatherV2がArrow本体に組み込まれる[^3]
+  - 読み書きする関数名は`feather`だったり`arrow`だったり……
+  - 2021年に決まった正式な拡張子は`.arrow`？[^4]
+- 一方2017年にはParquetをArrowライブラリで読み書きできるようになっており、一般的にはParquetの利用が推奨されている[^5]
+
+[^3]: [Apache Arrow 0.17.0 Release](https://arrow.apache.org/blog/2020/04/21/0.17.0-release/)
+[^4]: [Apache Arrowデータのメディアタイプ（MIMEタイプ）](https://www.clear-code.com/blog/2021/6/25/apache-arrow-media-types.html)
+[^5]: [Feather V2 with Compression Support in Apache Arrow 0.17.0](https://ursalabs.org/blog/2020-feather-v2/)
+
 ## Arrow R Package
+
+- RockerプロジェクトのDockerでは`rocker/tidyverse`にインストールされている（のでこのスライド内のサンプルコードは`rocker/tidyverse`で動くはず）。
+- ソースインストールには恐ろしい時間がかかることに注意！
 
 # `arrow`によるファイル読み込み
 
@@ -217,3 +250,10 @@ c("mtcars.parquet", "mtcars.parquet") |>
 ```{r}
 fs::file_delete("mtcars.parquet")
 ```
+
+# Parquetの注意点
+
+- 対応ツールが少ない
+- 特殊な形式に注意
+  - 独自メタデータ
+  - Hive-style パーティショニング
