@@ -64,8 +64,7 @@ A. 場合による。（ようなので試してみてください！）
   - 列方向に圧縮されるため大量のレコードを圧縮しやすい
   - 列単位でベクトル化した計算を行う分析処理と相性が良い
 
-[^1]: 
-[Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
+[^1]: [Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
 
 ## Apache Arrow
 
@@ -90,15 +89,17 @@ A. 場合による。（ようなので試してみてください！）
 
 ## Arrow R Package
 
-- RockerプロジェクトのDockerでは`rocker/tidyverse`にインストールされている（のでこのスライド内のサンプルコードは`rocker/tidyverse`で動くはず）。
-- ソースインストールには恐ろしい時間がかかることに注意！
+- パッケージ名は`arrow`
+- Apache Arrow C++ライブラリ（`libarrow`）のRバインディング
+  - Python
+- ソースインストールすると`libarrow`のビルドに長時間がかかることに注意！
+- RockerプロジェクトのDockerでは`rocker/tidyverse`にインストール済（のでこのスライド内のサンプルコードは`rocker/tidyverse`で動くはず）
 
 # `arrow`によるファイル読み込み
 
 ## ファイルの読み書き
 
-`arrow`パッケージは独自にファイルを読み書きする関数を持っている。  
-他パッケージとの対応関係は以下の通り。
+`arrow`パッケージは独自にファイルを読み書きする関数を持っている。
 
 | 対象ファイル | 数   |  utils   |                               readr                               |                                       arrow                                       |
 | ------------ | ---- | :------: | :---------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
@@ -106,6 +107,8 @@ A. 場合による。（ようなので試してみてください！）
 | csv          | 複数 |    -     |                             read_csv                              |    [open_dataset](https://arrow.apache.org/docs/r/reference/open_dataset.html)    |
 | parquet      | 単体 |    -     |                                 -                                 |    [read_parquet](https://arrow.apache.org/docs/r/reference/read_parquet.html)    |
 | parquet      | 複数 |    -     |                                 -                                 |                                   open_dataset                                    |
+
+: データ読み込み関数の比較 {#tbl-readfiles}
 
 ## CSVの読み込み　1/3
 
@@ -190,9 +193,25 @@ c("mtcars.parquet", "mtcars.parquet") |>
 
 # dplyr query
 
+## arrow_dplyr_query
+
+Rの`data.frame`に変換することなくArrowフォーマットのままdplyrで記述した処理を実行できる
+
+```{r}
+#| echo: true
+arrow::open_dataset("mtcars.parquet") |>
+  dplyr::select(cyl) |>
+  class()
+```
+
+::: {.incremental}
+- `Table`や`Dataset`をdplyrのクエリの対象にすると`arrow_dplyr_query`クラスオブジェクトになる
+- `arrow_dplyr_query`を`compute`か`collect`に渡すことでクエリが実行される（`dbplyr`に類似）
+:::
+
 ## 遅延評価 {auto-animate="true"}
 
-データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+`compute`もしくは`collect`に繋げるまで評価されない
 
 ```r
 c("mtcars.parquet", "mtcars.parquet") |>
@@ -202,7 +221,7 @@ c("mtcars.parquet", "mtcars.parquet") |>
 
 ## 遅延評価 {auto-animate="true"}
 
-データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+`compute`もしくは`collect`に繋げるまで評価されない
 
 ```{.r code-line-numbers="|3-4"}
 c("mtcars.parquet", "mtcars.parquet") |>
@@ -213,14 +232,14 @@ c("mtcars.parquet", "mtcars.parquet") |>
 ```
 
 ::: {.incremental}
-- dplyrクエリはarrowパッケージによって翻訳されlibarrowがクエリを実行する。
-- 翻訳可能な関数はarrowに登録されているもののみなので、非対応の関数を含めるとエラーになる。
-- 対応している関数は徐々に増えており、[NEWS](https://arrow.apache.org/docs/r/news/index.html)で確認可能。
+- dplyrクエリはarrowパッケージによって翻訳され`libarrow`がクエリを実行する
+- 翻訳可能な関数はarrowに登録されているもののみなので、非対応の関数を含めるとエラーになる（データセットに対するクエリの場合）
+- 対応している関数は徐々に増えており、[NEWS](https://arrow.apache.org/docs/r/news/index.html)で確認可能
 :::
 
 ## 遅延評価 {auto-animate="true"}
 
-データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+`compute`もしくは`collect`に繋げるまで評価されない
 
 ```{.r code-line-numbers="1-2"}
 c("mtcars.parquet", "mtcars.parquet") |>
@@ -230,11 +249,15 @@ c("mtcars.parquet", "mtcars.parquet") |>
   dplyr::collect()
 ```
 
-- Parquetファイルに対してクエリを実行するとき、クエリを解析し必要な列と行のみをファイルから読み込む（プッシュダウン）。
+::: {.incremental}
+- Parquetデータセットに対してクエリを実行するとき、クエリを解析し必要な列と行のみをファイルから読み込む（プッシュダウン）
+  - 読み込むデータが少なくなるほど読み込み時間は短縮される
+  - CSVとParquetの大きな差
+:::
 
 ## 遅延評価 {auto-animate="true"}
 
-データセットを`compute`もしくは`collect`で読み込むまでの間に、dplyrのクエリを書いて遅延評価させられる。（`dbplyr`と同じ記法）
+`compute`もしくは`collect`に繋げるまで評価されない
 
 ```{r}
 #| echo: true
