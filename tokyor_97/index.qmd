@@ -291,16 +291,30 @@ c("mtcars.parquet", "mtcars.parquet") |>
 
 ## メモリに乗り切らないデータセットの加工
 
+データセットは`Table`や`data.frame`の状態ではメモリに乗り切らないような容量のデータを含んでいる可能性もある
 
-
-```{.r code-line-numbers="|5-6"}
+```{.r code-line-numbers="|6"}
 fs::dir_create("test_data")
 
-c("mtcars.parquet", "mtcars.parquet") |>
+c("mtcars.parquet") |>
   arrow::open_dataset(format = "parquet") |>
-  dplyr::group_by(cyl) |>
-  arrow::write_dataset("test_data")
+  arrow::write_dataset("test_data", partitioning = "cyl")
 ```
+
+しかし上記のようにデータセットからデータセットに変換する場合は利用可能なメモリ内で逐次処理されるので、**メモリに乗り切らないデータを処理可能**らしい[^6]
+
+この例では1つのParquetファイルを`cyl`列の値で分割した複数のParquetファイルに分割している（パーティショニング）
+
+[^6]: Pythonライブラリのドキュメント[Writing large amounts of data](https://arrow.apache.org/docs/6.0/python/dataset.html#writing-large-amounts-of-data)に記載あり
+
+## Hive-style パーティション
+
+```r
+fs::dir_create("test_data")
+arrow::write_dataset(mtcars, "test_data", partitioning = "cyl")
+```
+
+上のコードを実行すると以下のような複数のディレクトリとParquetファイルが生成される
 
 ```shell
 $ tree test_data
@@ -314,6 +328,25 @@ test_data
 
 3 directories, 3 files
 ```
+
+Parquetファイルには`cyl`列が含まれておらず代わりにディレクトリ名が`key=value`の形式になっている
+
+## パーティショニングを利用する場合の注意
+
+- Parquetファイルのサイズとパーティション数[^7]
+- 読み取り可能なツールはかなり限られる
+  - ⭕ `pyarrow` (PythonのArrow公式ライブラリ)
+  - ❌ [`polars`](https://github.com/pola-rs/polars)
+  - ❌ [`duckdb`](https://github.com/duckdb/duckdb)
+  - ❌ [`Parquet.jl`](https://github.com/JuliaIO/Parquet.jl)
+
+```python
+>>> import pyarrow.dataset
+>>> pyarrow.dataset.dataset("test_data", partitioning="hive")
+<pyarrow._dataset.FileSystemDataset object at 0x7f1162853730>
+```
+
+[^7]: [Partitioning performance considerations](https://arrow.apache.org/docs/r/articles/dataset.html#partitioning-performance-considerations)
 
 <!-- clean up -->
 
