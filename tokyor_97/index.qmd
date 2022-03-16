@@ -1,6 +1,6 @@
 ---
-title: "Apache Arrow 鬼はええ！"
-subtitle: "このままCSV全部Parquetに変換していこうぜ！"
+title: "Apache Arrow 鬼はええ！<br/>このままCSV全部Parquetに<br/>変換していこうぜ！"
+subtitle: "2022-03-19 第97回R勉強会@東京<br/>@eitsupi"
 format:
   revealjs:
     theme: [night, custom.scss]
@@ -18,15 +18,25 @@ engine: knitr
 
 ## 自己紹介
 
-![icon](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+:::: {.columns}
+::: {.column width="30%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+::: {.column width="70%"}
 
 - [@eitsupi](https://twitter.com/eitsupi)
 - 製造業勤務
+  - Excelが嫌になりRを触り初めて3年
 - Dockerイメージ`rocker/r-ver`他のメンテナー
+
+:::
+::::
 
 ## 今日の話……
 
-数十分かけて読み込んでいたCSVファイルをParquetに置換してみたら数分で読めるようになったのでその際に調べたこと中心。
+数十分かけて読み込んでいたCSVファイル群をParquetに置換してみたら数分で読めるようになったのでその際に調べたこと
 
 :::: {.columns}
 ::: {.column width="50%"}
@@ -53,7 +63,7 @@ engine: knitr
 
 Q. CSVをParquetにするとどのくらい早くなる？
 
-A. 場合による。（ようなので試してみてください！）
+A. 場合による（ようなので試してみましょう！）
 
 # Apache Parquet と<br/>Apache Arrow
 
@@ -99,7 +109,7 @@ A. 場合による。（ようなので試してみてください！）
 
 ## ファイルの読み書き
 
-`arrow`パッケージは独自にファイルを読み書きする関数を持っている。
+`arrow`パッケージは独自にファイルを読み書きする関数を持っている
 
 | 対象ファイル | 数   |  utils   |                               readr                               |                                       arrow                                       |
 | ------------ | ---- | :------: | :---------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
@@ -122,23 +132,23 @@ file_csv |>
 ```
 
 ::: {.incremental}
-- `as_data_frame`引数はRの`data.frame`に変換するか`arrow::Table`のままにするかを制御する。（デフォルトは`TRUE`）
+- `as_data_frame`引数はRの`data.frame`に変換するか`arrow::Table`のままにするかを制御する（デフォルトは`TRUE`）
 :::
 
 ## CSVの読み込み　2/3
 
-同じ列構造を持つ複数ファイルを読み込みたい場合は`open_dataset()`によりデータセットとして開く。
+同じ列構造を持つ複数ファイルを読み込みたい場合は`open_dataset()`によりデータセットとして開く
 
 ```{r}
 #| echo: true
 c(file_csv, file_csv) |> arrow::open_dataset(format = "csv")
 ```
 
-この段階では矩形データの構造（スキーマ）を読み込んだだけで、データ全体を読み込んではいない。
+この段階では矩形データの構造（スキーマ）を読み込んだだけで、データ全体を読み込んではいない
 
 ## CSVの読み込み　3/3
 
-`compute`か`collect`でデータをメモリ上に読み込む。
+`compute`か`collect`でデータをメモリ上に読み込む
 
 ```{r}
 #| echo: true
@@ -169,7 +179,7 @@ ds |> dplyr::collect()
 
 ## Parquetファイルの読み込み　1/2
 
-`write_parquet`でParquetファイルを書き込んで、`read_parquet`で読み込む。
+`write_parquet`でParquetファイルを書き込んで、`read_parquet`で読み込む
 
 ```{r}
 #| echo: true
@@ -182,7 +192,7 @@ arrow::read_parquet("mtcars.parquet", as_data_frame = FALSE)
 
 ## Parquetファイルの読み込み　2/2
 
-Parquetの場合も複数ファイルの場合は`open_dataset`で開く。`format`引数のデフォルトは`"parquet"`なので指定しなくてもよい。
+Parquetの場合も複数ファイルの場合は`open_dataset`で開く`format`引数のデフォルトは`"parquet"`なので指定しなくてもよい
 
 ```{r}
 #| echo: true
@@ -193,9 +203,20 @@ c("mtcars.parquet", "mtcars.parquet") |>
 
 # dplyr query
 
+## dplyrの基本
+
+[`dplyr`](https://dplyr.tidyverse.org/)の中心的な関数は`data.frame`を第一引数にとり`data.frame`を返す
+
+```{r}
+#| echo: true
+mtcars |>
+  dplyr::select(cyl) |>
+  class()
+```
+
 ## arrow_dplyr_query
 
-Rの`data.frame`に変換することなくArrowフォーマットのままdplyrで記述した処理を実行できる
+`Table`や`Dataset`をdplyrのクエリの対象にすると`arrow_dplyr_query`クラスオブジェクトになる
 
 ```{r}
 #| echo: true
@@ -205,13 +226,13 @@ arrow::open_dataset("mtcars.parquet") |>
 ```
 
 ::: {.incremental}
-- `Table`や`Dataset`をdplyrのクエリの対象にすると`arrow_dplyr_query`クラスオブジェクトになる
 - `arrow_dplyr_query`を`compute`か`collect`に渡すことでクエリが実行される（`dbplyr`に類似）
+- Rの`data.frame`に変換することなくArrowインメモリフォーマットのままdplyrで記述した処理を実行できる
 :::
 
 ## 遅延評価 {auto-animate="true"}
 
-`compute`もしくは`collect`に繋げるまで評価されない
+クエリは`compute`もしくは`collect`に繋げるまで評価されない
 
 ```r
 c("mtcars.parquet", "mtcars.parquet") |>
@@ -221,7 +242,7 @@ c("mtcars.parquet", "mtcars.parquet") |>
 
 ## 遅延評価 {auto-animate="true"}
 
-`compute`もしくは`collect`に繋げるまで評価されない
+クエリは`compute`もしくは`collect`に繋げるまで評価されない
 
 ```{.r code-line-numbers="|3-4"}
 c("mtcars.parquet", "mtcars.parquet") |>
@@ -237,9 +258,9 @@ c("mtcars.parquet", "mtcars.parquet") |>
 - 対応している関数は徐々に増えており、[NEWS](https://arrow.apache.org/docs/r/news/index.html)で確認可能
 :::
 
-## 遅延評価 {auto-animate="true"}
+## プッシュダウン {auto-animate="true"}
 
-`compute`もしくは`collect`に繋げるまで評価されない
+クエリは`compute`もしくは`collect`に繋げるまで評価されない
 
 ```{.r code-line-numbers="1-2"}
 c("mtcars.parquet", "mtcars.parquet") |>
@@ -250,14 +271,14 @@ c("mtcars.parquet", "mtcars.parquet") |>
 ```
 
 ::: {.incremental}
-- Parquetデータセットに対してクエリを実行するとき、クエリを解析し必要な列と行のみをファイルから読み込む（プッシュダウン）
+- Parquetデータセットに対してクエリを実行するとき、クエリを解析し必要な列と行のみをファイルから読み込む（**プッシュダウン**）
   - 読み込むデータが少なくなるほど読み込み時間は短縮される
-  - CSVとParquetの大きな差
+  - **CSVとParquetの大きな差**
 :::
 
-## 遅延評価 {auto-animate="true"}
+## 実行 {auto-animate="true"}
 
-`compute`もしくは`collect`に繋げるまで評価されない
+クエリは`compute`もしくは`collect`に繋げるまで評価されない
 
 ```{r}
 #| echo: true
@@ -266,6 +287,32 @@ c("mtcars.parquet", "mtcars.parquet") |>
   dplyr::filter(cyl == 4) |>
   dplyr::select(dplyr::starts_with("d")) |>
   dplyr::collect()
+```
+
+## メモリに乗り切らないデータセットの加工
+
+
+
+```{.r code-line-numbers="|5-6"}
+fs::dir_create("test_data")
+
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::group_by(cyl) |>
+  arrow::write_dataset("test_data")
+```
+
+```shell
+$ tree test_data
+test_data
+├── cyl=4
+│   └── part-0.parquet
+├── cyl=6
+│   └── part-0.parquet
+└── cyl=8
+    └── part-0.parquet
+
+3 directories, 3 files
 ```
 
 <!-- clean up -->
