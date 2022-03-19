@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "資料",
     "section": "",
-    "text": "第91回R勉強会@東京（#TokyoR）LT Rから始めるDocker生活\n第93回R勉強会@東京（#TokyoR）LT rocker/r-verとかのアップデートをちょっと自動化した話\nJapan.R 2021 ショートセッション rocker/r-ver一族のビルドシステムを大改修した話"
+    "text": "第91回R勉強会@東京（#TokyoR）LT Rから始めるDocker生活\n第93回R勉強会@東京（#TokyoR）LT rocker/r-verとかのアップデートをちょっと自動化した話\nJapan.R 2021 ショートセッション rocker/r-ver一族のビルドシステムを大改修した話\n第97回R勉強会@東京（#TokyoR）応用セッション Apache Arrowの話"
   },
   {
     "objectID": "tokyor_97/index.html#自己紹介",
@@ -32,21 +32,21 @@
     "href": "tokyor_97/index.html#apache-parquet",
     "title": "Apache Arrow 鬼はええ！このままCSV全部Parquetに変換していこうぜ！",
     "section": "Apache Parquet",
-    "text": "Apache Parquet\n\n2013年～1\nApache Hadoop用に作られた列指向のファイルフォーマット\n\n列方向に圧縮されるため大量のレコードを圧縮しやすい\n列単位でベクトル化した計算を行う分析処理と相性が良い\n\n\nAnnouncing Parquet 1.0: Columnar Storage for Hadoop"
+    "text": "Apache Parquet\n\n2013年～1\nApache Hadoop用に作られた列指向のファイルフォーマット\n\n列方向に圧縮されるため大量のレコードを圧縮しやすい\n列単位でベクトル化した計算を行う分析処理と相性が良い"
   },
   {
     "objectID": "tokyor_97/index.html#apache-arrow",
     "href": "tokyor_97/index.html#apache-arrow",
     "title": "Apache Arrow 鬼はええ！このままCSV全部Parquetに変換していこうぜ！",
     "section": "Apache Arrow",
-    "text": "Apache Arrow\n\n2016年～1\nA high-performance cross-system data layer for columnar in-memory analytics\n言語に寄らない列指向のインメモリフォーマットの標準を目指しているプロジェクト\n\nArrowを介することで、ある列指向データから別の列指向データへの変換を個別に実装する必要はなくなる\n\n\nThe Apache® Software Foundation Announces Apache Arrow™ as a Top-Level Project"
+    "text": "Apache Arrow\n\n2016年～2\nA high-performance cross-system data layer for columnar in-memory analytics\n言語に寄らない列指向のインメモリフォーマットの標準を目指しているプロジェクト\n\nArrowを介することで、ある列指向データから別の列指向データへの変換を個別に実装する必要はなくなる"
   },
   {
     "objectID": "tokyor_97/index.html#parquetとfeather",
     "href": "tokyor_97/index.html#parquetとfeather",
     "title": "Apache Arrow 鬼はええ！このままCSV全部Parquetに変換していこうぜ！",
     "section": "ParquetとFeather",
-    "text": "ParquetとFeather\n\n2016年時点でArrowはファイル形式を提供しなかったため、ファイル形式およびそのファイルを読み書きするFeatherライブラリが試験的に作られる\n2020年にArrow IPC (Inter-Process Communication)フォーマットをLZ4かZSTDで圧縮した通称FeatherV2がArrow本体に組み込まれる1\n\nfeatherと呼ばれたりarrowと呼ばれたりipcと呼ばれたり……\n2021年に決まった正式な拡張子は.arrow？2\n\n一方2017年にはParquetをArrowライブラリで読み書きできるようになっており、Parquetの利用が推奨されている3\n\nApache Arrow 0.17.0 ReleaseApache Arrowデータのメディアタイプ（MIMEタイプ）Feather V2 with Compression Support in Apache Arrow 0.17.0"
+    "text": "ParquetとFeather\n\n2016年時点でArrowはファイル形式を提供しなかったため、ファイル形式およびそのファイルを読み書きするFeatherライブラリが試験的に作られる\n2020年にArrow IPC (Inter-Process Communication)フォーマットをLZ4かZSTDで圧縮した通称FeatherV2がArrow本体に組み込まれる3\n\nfeatherと呼ばれたりarrowと呼ばれたりipcと呼ばれたり……\n2021年に決まった正式な拡張子は.arrow？4\n\n一方2017年にはParquetをArrowライブラリで読み書きできるようになっており、Parquetの利用が推奨されている5"
   },
   {
     "objectID": "tokyor_97/index.html#arrow-r-package",
@@ -151,7 +151,7 @@
     "href": "tokyor_97/index.html#データセットの作成",
     "title": "Apache Arrow 鬼はええ！このままCSV全部Parquetに変換していこうぜ！",
     "section": "データセットの作成",
-    "text": "データセットの作成\n列の値毎に分割した複数のParquetファイルをデータセットとして書き込める（パーティショニング）\nfs::dir_create(\"test_data\")\n\nc(\"mtcars.parquet\") |>\n  arrow::open_dataset(format = \"parquet\") |>\n  arrow::write_dataset(\"test_data\", partitioning = \"cyl\")\n\nなお上記のようにデータセットからデータセットに直接変換する場合等はバッチ毎に逐次処理されるので、メモリに乗り切らないデータを加工可能1……かもしれない2\n\nPythonライブラリのドキュメントWriting large amounts of dataに記載あり現時点ではParquetスキャンに大量のメモリを消費するようで、私のノートPCはクラッシュした"
+    "text": "データセットの作成\n列の値毎に分割した複数のParquetファイルをデータセットとして書き込める（パーティショニング）\nfs::dir_create(\"test_data\")\n\nc(\"mtcars.parquet\") |>\n  arrow::open_dataset(format = \"parquet\") |>\n  arrow::write_dataset(\"test_data\", partitioning = \"cyl\")\n\nなお上記のようにデータセットからデータセットに直接変換する場合等はバッチ毎に逐次処理されるので、メモリに乗り切らないデータを加工可能6……かもしれない7"
   },
   {
     "objectID": "tokyor_97/index.html#hive-style-パーティション",
@@ -165,7 +165,7 @@
     "href": "tokyor_97/index.html#パーティショニングを利用する場合の注意",
     "title": "Apache Arrow 鬼はええ！このままCSV全部Parquetに変換していこうぜ！",
     "section": "パーティショニングを利用する場合の注意",
-    "text": "パーティショニングを利用する場合の注意\n\nParquetファイルのサイズとパーティション数1\nそのまま読み込み可能なツールは限られる\n\n⭕ pyarrow (PythonのArrow公式ライブラリ)\n❌ polars\n❌ duckdb\n❌ Parquet.jl\n\n\n>>> import pyarrow.dataset as ds\n>>> ds.dataset(\"test_data\", partitioning=\"hive\")\n<pyarrow._dataset.FileSystemDataset object at 0x7f1162853730>\nPartitioning performance considerations"
+    "text": "パーティショニングを利用する場合の注意\n\nParquetファイルのサイズとパーティション数8\nそのまま読み込み可能なツールは限られる\n\n⭕ pyarrow (PythonのArrow公式ライブラリ)\n❌ polars\n❌ duckdb\n❌ Parquet.jl\n\n\n>>> import pyarrow.dataset as ds\n>>> ds.dataset(\"test_data\", partitioning=\"hive\")\n<pyarrow._dataset.FileSystemDataset object at 0x7f1162853730>"
   },
   {
     "objectID": "tokyor_97/index.html#dplyrクエリ中での型変更",
@@ -179,7 +179,7 @@
     "href": "tokyor_97/index.html#duckdb",
     "title": "Apache Arrow 鬼はええ！このままCSV全部Parquetに変換していこうぜ！",
     "section": "DuckDB",
-    "text": "DuckDB\n\n2019年～1\nしばしば The SQLite for Analytics と紹介されている、SQLiteのような使い勝手を目指した列指向の分析用RDBMS\nParquetファイル（複数可）に対してクエリを実行できる\n\n現段階ではHiveスタイルのパーティションには非対応\nSnappy圧縮のみ対応\n\nシングルバイナリのCLIや、公式Python、Rパッケージ等から実行\n\nPythonとRにはArrowとDuckDBの相互変換機能があり、Arrowオブジェクトに対してDuckDBのクエリを実行可能2\n\n\nThis is the first preview release of DuckDB.DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB"
+    "text": "DuckDB\n\n2019年～9\nしばしば The SQLite for Analytics と紹介されている、SQLiteのような使い勝手を目指した列指向の分析用RDBMS\nParquetファイル（複数可）に対してクエリを実行できる\n\n現段階ではHiveスタイルのパーティションには非対応\nSnappy圧縮のみ対応\n\nシングルバイナリのCLIや、公式Python、Rパッケージ等から実行\n\nPythonとRにはArrowとDuckDBの相互変換機能があり、Arrowオブジェクトに対してDuckDBのクエリを実行可能10"
   },
   {
     "objectID": "tokyor_97/index.html#to_arrowとto_duckdb",
