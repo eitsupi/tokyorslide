@@ -2,7 +2,7 @@ project:
   type: website
   output-dir: docs
   render:
-    - "*.qmd"
+    - "index.qmd"
   resources:
     - image
     - tokyor_91lt

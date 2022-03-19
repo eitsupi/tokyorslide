@@ -1,0 +1,453 @@
+---
+title: "Apache Arrow 鬼はええ！<br/>このままCSV全部Parquetに<br/>変換していこうぜ！"
+subtitle: "2022-03-19 第97回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#TokyoR"
+    self-contained: false
+engine: knitr
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+::: {.column width="75%"}
+
+- [@eitsupi](https://twitter.com/eitsupi)
+- 製造業勤務
+  - Excelが嫌になりRを触り初めて3年
+- Dockerイメージ`rocker/r-ver`他のメンテナー
+- VSCode派
+  - Remote-Containersばかり使っている
+- このスライドで[Quarto](https://quarto.org/)に挑戦
+
+:::
+::::
+
+## 今日の話
+
+- 数十分かけて読み込んでいたCSVファイル群をParquetに置換する際に調べたこと（数十秒～数分で読めるようになった）
+- ArrowとParquetのことを少しでも知ってもらい、試すきっかけになれば……
+
+:::: {.columns}
+::: {.column width="50%"}
+
+### 対象かも
+
+- ✅データはCSVファイル
+- ✅大量のファイルを読む
+- ✅読み込みに数十分かかる
+
+:::
+::: {.column width="50%"}
+
+### 対象外かも
+
+- ✅データはDB上
+- ✅少数のファイルを読む
+- ✅読み込みは数秒で終わる
+
+:::
+::::
+
+## 結論
+
+Q. CSVをParquetにするとどのくらい早くなる？
+
+. . .
+
+A. 場合による（ようなので試してみましょう！）
+
+# Apache Parquet と<br/>Apache Arrow
+
+## Apache Parquet
+
+- 2013年～[^1]
+- Apache Hadoop用に作られた**列指向**の**ファイルフォーマット**
+  - 列方向に圧縮されるため大量のレコードを圧縮しやすい
+  - 列単位でベクトル化した計算を行う分析処理と相性が良い
+
+[^1]: [Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
+
+## Apache Arrow
+
+- 2016年～[^2]
+- _A high-performance cross-system data layer for columnar in-memory analytics_
+- 言語に寄らない**列指向**の**インメモリフォーマット**の標準を目指しているプロジェクト
+  - Arrowを介することで、ある列指向データから別の列指向データへの変換を個別に実装する必要はなくなる
+
+[^2]: [The Apache® Software Foundation Announces Apache Arrow™ as a Top-Level Project](https://blogs.apache.org/foundation/entry/the_apache_software_foundation_announces87)
+
+## ParquetとFeather
+
+- 2016年時点でArrowはファイル形式を提供しなかったため、ファイル形式およびそのファイルを読み書きする[Featherライブラリ](https://github.com/wesm/feather)が試験的に作られる
+- 2020年にArrow IPC (Inter-Process Communication)フォーマットをLZ4かZSTDで圧縮した通称FeatherV2がArrow本体に組み込まれる[^3]
+  - `feather`と呼ばれたり`arrow`と呼ばれたり`ipc`と呼ばれたり……
+  - 2021年に決まった正式な拡張子は`.arrow`？[^4]
+- 一方2017年にはParquetをArrowライブラリで読み書きできるようになっており、Parquetの利用が推奨されている[^5]
+
+[^3]: [Apache Arrow 0.17.0 Release](https://arrow.apache.org/blog/2020/04/21/0.17.0-release/)
+[^4]: [Apache Arrowデータのメディアタイプ（MIMEタイプ）](https://www.clear-code.com/blog/2021/6/25/apache-arrow-media-types.html)
+[^5]: [Feather V2 with Compression Support in Apache Arrow 0.17.0](https://ursalabs.org/blog/2020-feather-v2/)
+
+## Arrow R Package
+
+- パッケージ名は`arrow`
+- Apache Arrow C++ライブラリ（`libarrow`）のRバインディング
+- ソースインストールすると`libarrow`のビルドに長時間がかかることに注意！
+- RockerプロジェクトのDockerイメージでは`rocker/tidyverse`にインストール済（なのでこのスライド内のサンプルコードは`rocker/tidyverse`で動くはず）
+
+## こちらもどうぞ
+
+- [そろそろRユーザーもApache ArrowでParquetを使ってみませんか？](https://notchained.hatenablog.com/entry/2019/12/17/213356) 2019-12-17  
+  「CSVをやめて人間を続けよう」
+- [New Directions for Apache Arrow](https://www.slideshare.net/wesm/new-directions-for-apache-arrow) 2021-09-10  
+  Wes McKinney氏によるNew York R Conferenceでの発表資料
+- [Apache ArrowによるRubyのデータ処理対応の可能性](https://www.ipsj.or.jp/dp/contents/publication/49/S1301-S01.html) 2022-02  
+  日本語でArrowについて詳しく説明された論文
+
+# `arrow`によるファイル読み込み
+
+## ファイルの読み書き
+
+`arrow`パッケージは独自にファイルを読み書きする関数を持っている
+
+| 対象ファイル | 数   |  utils   |                               readr                               |                                       arrow                                       |
+| ------------ | ---- | :------: | :---------------------------------------------------------------: | :-------------------------------------------------------------------------------: |
+| csv          | 単体 | read.csv | [read_csv](https://readr.tidyverse.org/reference/read_delim.html) | [read_csv_arrow](https://arrow.apache.org/docs/r/reference/read_delim_arrow.html) |
+| csv          | 複数 |    -     |                             read_csv                              |    [open_dataset](https://arrow.apache.org/docs/r/reference/open_dataset.html)    |
+| parquet      | 単体 |    -     |                                 -                                 |    [read_parquet](https://arrow.apache.org/docs/r/reference/read_parquet.html)    |
+| parquet      | 複数 |    -     |                                 -                                 |                                   open_dataset                                    |
+
+: データ読み込み関数の比較 {#tbl-readfiles}
+
+## CSVの読み込み　1/3
+
+```{r}
+#| echo: true
+#| code-line-numbers: "|3"
+file_csv <- readr::readr_example("mtcars.csv")
+
+arrow::read_csv_arrow(file_csv, as_data_frame = FALSE)
+```
+
+. . .
+
+ `as_data_frame`引数はRの`data.frame`に変換するか`arrow::Table`のままにするかを制御する（デフォルトは`TRUE`）
+
+## CSVの読み込み　2/3
+
+同じ列構造を持つ複数ファイルを読み込みたい場合は`open_dataset()`によりデータセットとして開く
+
+```{r}
+#| echo: true
+c(file_csv, file_csv) |> arrow::open_dataset(format = "csv")
+```
+
+. . .
+
+この段階では矩形データの構造（スキーマ）を読み込んだだけで、データ全体を読み込んではいない
+
+## CSVの読み込み　3/3
+
+`compute`か`collect`でデータをメモリ上に読み込む
+
+```{r}
+#| echo: true
+ds <- c(file_csv, file_csv) |> arrow::open_dataset(format = "csv")
+```
+
+. . .
+
+::::{.columns}
+:::{.column width="50%"}
+
+### Table
+
+```{r}
+#| echo: true
+ds |> dplyr::compute()
+```
+
+:::
+:::{.column width="50%"}
+
+### data.frame
+
+```{r}
+#| echo: true
+ds |> dplyr::collect()
+```
+:::
+::::
+
+## Parquetファイルの読み込み　1/2
+
+`write_parquet`でParquetファイルを書き込んで、`read_parquet`で読み込む
+
+```{r}
+#| echo: true
+arrow::write_parquet(mtcars, "mtcars.parquet")
+
+arrow::read_parquet("mtcars.parquet", as_data_frame = FALSE)
+```
+
+## Parquetファイルの読み込み　2/2
+
+Parquetの場合も複数ファイルの場合は`open_dataset`を使う  
+`format`引数のデフォルトは`"parquet"`なので指定しなくてもよい
+
+```{r}
+#| echo: true
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::compute()
+```
+
+# `dplyr` query
+
+## `dplyr`の基本おさらい
+
+多くの関数は`data.frame`を第一引数にとり`data.frame`を返す
+
+```{r}
+#| echo: true
+class(mtcars)
+class(dplyr::select(mtcars, cyl))
+```
+
+. . .
+
+もしくはパイプ演算子を使って
+
+```{r}
+#| echo: true
+mtcars |>
+  dplyr::select(cyl) |>
+  class()
+```
+
+## arrow_dplyr_query
+
+`Table`や`Dataset`をそれらのdplyrの関数の第一引数に渡すと`arrow_dplyr_query`クラスオブジェクトが返ってくる
+
+```{r}
+#| echo: true
+arrow::open_dataset("mtcars.parquet") |>
+  dplyr::select(cyl) |>
+  class()
+```
+
+::: {.incremental}
+- `arrow_dplyr_query`を第一引数に渡した場合も同じ挙動
+  - `data.frame`のようにパイプラインを繋げていける
+- `compute`か`collect`に渡すとクエリが実行される（`dbplyr`に類似）
+  - Arrowインメモリフォーマットのままdplyrで記述した処理を実行できる
+:::
+
+## 遅延評価 {auto-animate="true"}
+
+データセットは`compute`か`collect`に繋げるまで読み込まれない
+
+```r
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::collect()
+```
+
+## 遅延評価 {auto-animate="true"}
+
+クエリも`compute`か`collect`に繋げるまで評価されない
+
+```{.r code-line-numbers="|3-4"}
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::filter(cyl == 6) |>
+  dplyr::select(dplyr::starts_with("d")) |>
+  dplyr::collect()
+```
+
+::: {.incremental}
+- dplyrクエリはarrowパッケージによって翻訳され`libarrow`がクエリを実行する
+- 翻訳可能な関数はarrowに登録されているもののみなので、非対応の関数を含めるとエラーになる（データセットに対するクエリの場合）
+- 対応している関数は徐々に増えており、[NEWS](https://arrow.apache.org/docs/r/news/index.html)で確認可能
+:::
+
+## プッシュダウン {auto-animate="true"}
+
+クエリも`compute`か`collect`に繋げるまで評価されない
+
+```{.r code-line-numbers="1-2"}
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::filter(cyl == 6) |>
+  dplyr::select(dplyr::starts_with("d")) |>
+  dplyr::collect()
+```
+
+::: {.incremental}
+- Parquetデータセットに対してクエリを実行するとき、クエリを解析し必要な列と行のみをファイルから読み込む（**プッシュダウン**）
+  - **CSVと比べた場合のParquetの大きな利点**
+    - 読み込むデータの少ないほど読み込み時間は短縮される
+    - 読み込むデータの少ないほど省メモリで処理できる
+:::
+
+## 実行結果 {auto-animate="true"}
+
+クエリも`compute`か`collect`に繋げるまで評価されない
+
+```{r}
+#| echo: true
+c("mtcars.parquet", "mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  dplyr::filter(cyl == 6) |>
+  dplyr::select(dplyr::starts_with("d")) |>
+  dplyr::collect()
+```
+
+## データセットの作成
+
+列の値毎に分割した複数のParquetファイルをデータセットとして書き込める（パーティショニング）
+
+```r
+fs::dir_create("test_data")
+
+c("mtcars.parquet") |>
+  arrow::open_dataset(format = "parquet") |>
+  arrow::write_dataset("test_data", partitioning = "cyl")
+```
+
+. . .
+
+なお上記のようにデータセットからデータセットに直接変換する場合等はバッチ毎に逐次処理されるので、**メモリに乗り切らないデータを加工可能**[^6]……かもしれない[^7]
+
+[^6]: Pythonライブラリのドキュメント[Writing large amounts of data](https://arrow.apache.org/docs/6.0/python/dataset.html#writing-large-amounts-of-data)に記載あり
+[^7]: [現時点ではParquetスキャンに大量のメモリを消費するようで、私のノートPCはクラッシュした](https://github.com/apache/arrow/issues/12653)
+
+## Hive-style パーティション
+
+```r
+fs::dir_create("test_data")
+arrow::write_dataset(mtcars, "test_data", partitioning = "cyl")
+```
+
+上のコードを実行すると以下のような複数のディレクトリとParquetファイルが生成される
+
+```shell
+$ tree test_data
+test_data
+├── cyl=4
+│   └── part-0.parquet
+├── cyl=6
+│   └── part-0.parquet
+└── cyl=8
+    └── part-0.parquet
+
+3 directories, 3 files
+```
+
+Parquetファイルには`cyl`列が含まれておらず代わりにディレクトリ名が`key=value`の形式になっている
+
+## パーティショニングを利用する場合の注意
+
+- Parquetファイルのサイズとパーティション数[^8]
+- そのまま読み込み可能なツールは限られる
+  - ⭕ `pyarrow` (PythonのArrow公式ライブラリ)
+  - ❌ [`polars`](https://github.com/pola-rs/polars)
+  - ❌ [`duckdb`](https://github.com/duckdb/duckdb)
+  - ❌ [`Parquet.jl`](https://github.com/JuliaIO/Parquet.jl)
+
+```python
+>>> import pyarrow.dataset as ds
+>>> ds.dataset("test_data", partitioning="hive")
+<pyarrow._dataset.FileSystemDataset object at 0x7f1162853730>
+```
+
+[^8]: [Partitioning performance considerations](https://arrow.apache.org/docs/r/articles/dataset.html#partitioning-performance-considerations)
+
+## dplyrクエリ中での型変更
+
+`as.integer`等の一般的な関数は登録済みのものが多い
+
+任意のArrowタイプに変換するには`mutate`等の中で`cast`を使用する  
+**`cast`は単体の関数として存在しないため、ヘルプを検索してもヒットしない**
+
+```{r}
+#| echo: true
+mtcars |>
+  arrow::arrow_table() |>
+  dplyr::transmute(cyl = cast(cyl, arrow::int8())) |>
+  dplyr::compute()
+```
+
+# `duckdb`との連携
+
+## DuckDB
+
+- 2019年～[^9]
+- しばしば _The SQLite for Analytics_ と紹介されている、SQLiteのような使い勝手を目指した列指向の分析用RDBMS
+- Parquetファイル（複数可）に対してクエリを実行できる
+  - 現段階ではHiveスタイルのパーティションには非対応
+  - Snappy圧縮のみ対応
+- シングルバイナリのCLIや、公式Python、Rパッケージ等から実行
+  - PythonとRにはArrowとDuckDBの相互変換機能があり、Arrowオブジェクトに対してDuckDBのクエリを実行可能[^10]
+
+[^9]: [This is the first preview release of DuckDB.](https://github.com/duckdb/duckdb/releases/tag/v0.1.0)
+[^10]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://duckdb.org/2021/12/03/duck-arrow.html)
+
+## to_arrowとto_duckdb
+
+dplyrのパイプライン中で`arrow`と`duckdb`のクエリを相互切り替え可能
+
+`arrow`7.0.0の対応していない`slice_min`をduckdb側で処理する例
+
+```{r}
+#| echo: true
+#| code-line-numbers: "|4,6|5|"
+arrow::open_dataset("mtcars.parquet") |>
+  dplyr::select(mpg, cyl) |>
+  dplyr::group_by(cyl) |>
+  arrow::to_duckdb() |>
+  dplyr::slice_min(mpg, n = 3) |>
+  arrow::to_arrow() |>
+  dplyr::compute()
+```
+
+- `arrow`から見たメリット：非対応クエリを`duckdb`側で処理できる
+- `duckdb`から見たメリット：`arrow`のファイル読み込みを利用できる
+
+```{comment}
+clean up
+```
+
+```{r}
+fs::file_delete("mtcars.parquet")
+```
+
+# まとめ
+
+::: {.incremental}
+- Apache Arrowはこわくない
+- Apache Parquetはすぐ試せる
+- dplyrは心強い
+:::
+
+. . .
+
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
