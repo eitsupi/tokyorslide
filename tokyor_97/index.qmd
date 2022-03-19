@@ -10,7 +10,7 @@ format:
     chalkboard: false
     preview-links: auto
     footer: "#TokyoR"
-    self-contained: false
+    self-contained: true
 engine: knitr
 ---
 
