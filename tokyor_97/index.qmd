@@ -79,7 +79,6 @@ A. 場合による（ようなので試してみましょう！）
 - Apache Hadoop用に作られた**列指向**の**ファイルフォーマット**
   - 列方向に圧縮されるため大量のレコードを圧縮しやすい
   - 列単位でベクトル化した計算を行う分析処理と相性が良い
-- `SparkR::read.parquet`, `sparklyr::spark_read_parquet`
 
 [^1]: [Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
 
@@ -110,6 +109,15 @@ A. 場合による（ようなので試してみましょう！）
 - Apache Arrow C++ライブラリ（`libarrow`）のRバインディング
 - ソースインストールすると`libarrow`のビルドに長時間がかかることに注意！
 - RockerプロジェクトのDockerイメージでは`rocker/tidyverse`にインストール済（なのでこのスライド内のサンプルコードは`rocker/tidyverse`で動くはず）
+
+## こちらもどうぞ
+
+- [そろそろRユーザーもApache ArrowでParquetを使ってみませんか？](https://notchained.hatenablog.com/entry/2019/12/17/213356) 2019-12-17  
+  「CSVをやめて人間を続けよう」
+- [New Directions for Apache Arrow](https://www.slideshare.net/wesm/new-directions-for-apache-arrow) 2021-09-10  
+  Wes McKinney氏によるNew York R Conferenceでの発表資料
+- [Apache ArrowによるRubyのデータ処理対応の可能性](https://www.ipsj.or.jp/dp/contents/publication/49/S1301-S01.html) 2022-02  
+  日本語でArrowについて詳しく説明された論文
 
 # `arrow`によるファイル読み込み
 
@@ -421,7 +429,9 @@ arrow::open_dataset("mtcars.parquet") |>
 - `arrow`から見たメリット：非対応クエリを`duckdb`側で処理できる
 - `duckdb`から見たメリット：`arrow`のファイル読み込みを利用できる
 
-<!-- clean up -->
+```{comment}
+clean up
+```
 
 ```{r}
 fs::file_delete("mtcars.parquet")
