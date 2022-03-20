@@ -17,9 +17,9 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
 
-      # - name: Install quarto
-      #   run: |
-      #     /rocker_scripts/install_quarto.sh
+      - name: Install quarto
+        run: |
+          /rocker_scripts/install_quarto.sh
 
       - name: Build site
         run: |
