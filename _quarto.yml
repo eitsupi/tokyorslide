@@ -30,3 +30,5 @@ format:
     theme:
       light: flatly
       dark: darkly
+
+lang: ja
