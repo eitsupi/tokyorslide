@@ -13,6 +13,7 @@ format:
     self-contained: true
     reference-location: document
 engine: knitr
+lang: ja
 ---
 
 # はじめに
