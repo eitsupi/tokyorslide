@@ -1,0 +1,125 @@
+---
+title: "dtplyr 鬼はええ！<br/>このままdplyrパイプライン<br/>全部data.tableで計算しようぜ！"
+subtitle: "2022-07-23 第100回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#TokyoR"
+    self-contained: true
+    reference-location: document
+engine: knitr
+lang: ja
+execute:
+  cache: true
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+::: {.column width="75%"}
+
+- [@eitsupi](https://twitter.com/eitsupi)
+- 製造業勤務
+  - Excelが嫌になりRを触り初めて3年
+- Dockerイメージ`rocker/r-ver`他のメンテナー
+- VSCode派
+- 最近は[Quarto](https://quarto.org/)をよく使っています
+
+:::
+::::
+
+# [前回](https://eitsupi.github.io/tokyorslide/tokyor_97/)のあらすじ
+
+---
+
+![](arrow_slide.jpg){fig-align="center" alt="前回発表スライド"}
+
+巨大なデータを扱うときにはCSVではなくParquetを使うと便利です。
+
+## 今日の話
+
+- `dplyr`バックエンドの速度比較をやってみた。
+- `dtplyr`の日本語の情報が少ないので共有したい。
+  - [今こそ、data.tableを学ぼう！](https://speakerdeck.com/s_uryu/datatable1130)(2020-08-01)もご確認ください。
+
+:::: {.columns}
+::: {.column width="50%"}
+
+### 対象かも
+
+- ✅`dplyr`派
+- ✅`dbplyr`や`dtplyr`を試す機会のなかった方
+
+:::
+::: {.column width="50%"}
+
+### 対象外かも
+
+- ✅`data.table`派
+
+:::
+::::
+
+# 結論
+
+Q. `data.table`って速いの？
+
+. . .
+
+A. `dtplyr`ですぐに試せるのでやってみましょう！  
+（`tidyverse`パッケージインストール時にインストールされてます！）
+
+# `dtplyr`, `arrow`, `duckdb`
+
+## `dplyr`バックエンド達
+
+`dplyr`で記述したデータ操作を`dplyr`外で実行するパッケージ。
+
+- tydyverse[^dplyrbackends]
+  - [`multidplyr`](https://multidplyr.tidyverse.org/) : Rの計算を分散
+  - [`dtplyr`](https://dtplyr.tidyverse.org/) : [`data.table`](https://rdatatable.gitlab.io/data.table/)のクエリに変換して計算実行
+  - [`dbplyr`](https://dbplyr.tidyverse.org/) : [`duckdb`](https://duckdb.org/docs/api/r)などのDBにSQLを送信して計算実行
+- その他
+  - [`sparklyr`](https://spark.rstudio.com/) : SparkにSQLを送信して計算実行
+  - [`arrow`](https://arrow.apache.org/docs/r/) : Arrow C++ライブラリの計算エンジンAceroで計算実行
+
+[^dplyrbackends]: [dplyr backends: multidplyr 0.1.0, dtplyr 1.1.0, dbplyr 2.1.0](https://www.tidyverse.org/blog/2021/02/dplyr-backends/)
+
+## どれが速いか気になる！
+
+- `dtplyr`, `arrow`, `dbplyr`+`duckdb`は同じような目的（ローカル実行で集約計算などを速くしたい）で使用されます。
+  - [前回の発表](https://eitsupi.github.io/tokyorslide/tokyor_97/)で`arrow`と共に`duckdb`を紹介したところ、  
+  「`duckdb`の使いどころが分からない」との感想をいただいた。
+- 有名な[H2Oベンチマーク](https://h2oai.github.io/db-benchmark/)は最後の実行が2021年7月、
+  まだ`arrow`は`dplyr::summarise`を実行できなかった頃の結果。
+
+# ベンチマーク
+
+## データフレームの集約計算
+
+## Parquetからの集約計算
+
+# まとめ
+
+::: {.incremental}
+- `data.table`はマジで速い！
+- `dtplyr`で敷居も低い！
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
