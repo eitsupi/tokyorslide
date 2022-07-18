@@ -34,8 +34,6 @@ execute:
 - 製造業勤務
   - Excelが嫌になりRを触り初めて3年
 - Dockerイメージ`rocker/r-ver`他のメンテナー
-- VSCode派
-- 最近は[Quarto](https://quarto.org/)をよく使っています
 
 :::
 ::::
@@ -44,9 +42,9 @@ execute:
 
 ---
 
-![](arrow_slide.jpg){fig-align="center" alt="前回発表スライド"}
-
 巨大なデータを扱うときにはCSVではなくParquetを使うと便利です。
+
+![](arrow_slide.jpg){fig-align="center" alt="前回発表スライド"}
 
 ## 今日の話
 
@@ -132,30 +130,27 @@ mtcars |>
 
 ## 準備 1/3
 
-グループ数と行数を変えてベンチマークするために、  
+行数、列数、グループ数を変えてベンチマークするために、  
 データフレームを以下のような関数で作れるようにしておきます。
 
 ```{r}
 #| echo: true
 
-.gen_data <- function(n_group, n_row, .seed = 1) {
+.gen_data <- \(n_group, n_row, n_col_value, .seed = 1) {
+  groups <- seq_len(n_group) |>
+    rep_len(n_row) |>
+    as.character()
+
   set.seed(.seed)
-  tibble::tibble(
-    col_group = seq_len(n_group) |>
-      rep(n_row %/% n_group) |>
-      as.character(),
-    col_value = runif(n_row, min = 0, max = 100) |>
-      round()
-  )
+
+  runif(n_row * n_col_value, min = 0, max = 100) |>
+    round() |>
+    matrix(ncol = n_col_value) |>
+    tibble::as_tibble(
+      .name_repair = \(x) paste0("col_value_", seq_len(n_col_value))
+    ) |>
+    dplyr::mutate(col_group = groups, .before = 1)
 }
-```
-
-使い方
-
-```{.r}
-.gen_data(3, 300) |>
-  dplyr::group_by(col_group) |>
-  dplyr::summarise(sum = sum(col_value, na.rm = TRUE), .groups = "drop")
 ```
 
 ## 準備 2/3
@@ -170,14 +165,14 @@ mtcars |>
 ```{r}
 #| echo: true
 
-.use_dplyr <- function(.data) {
+.use_dplyr <-
+  function(.data, .fn = dplyr::summarise) {
   .data |>
     dplyr::group_by(col_group) |>
-    dplyr::summarise(
-      value = sum(col_value, na.rm = TRUE),
-      .groups = "drop"
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
     )
-}
+  }
 ```
 
 :::
@@ -188,16 +183,16 @@ mtcars |>
 ```{r}
 #| echo: true
 
-.use_dtplyr <- function(.data) {
+.use_dtplyr <-
+  function(.data, .fn = dplyr::summarise) {
   .data |>
     dtplyr::lazy_dt() |>
     dplyr::group_by(col_group) |>
-    dplyr::summarise(
-      value = sum(col_value, na.rm = TRUE),
-      .groups = "drop"
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
     ) |>
     dplyr::collect()
-}
+  }
 ```
 :::
 ::::
@@ -207,7 +202,7 @@ mtcars |>
 ```{r}
 #| echo: true
 
-df <- .gen_data(3, 300)
+df <- .gen_data(3, 300, 10)
 dplyr::all_equal(.use_dtplyr(df), .use_dplyr(df))
 ```
 
@@ -224,16 +219,16 @@ dplyr::all_equal(.use_dtplyr(df), .use_dplyr(df))
 ```{r}
 #| echo: true
 
-.use_arrow <- function(.data) {
+.use_arrow <-
+  function(.data, .fn = dplyr::summarise) {
   .data |>
     arrow::arrow_table() |>
     dplyr::group_by(col_group) |>
-    dplyr::summarise(
-      value = sum(col_value, na.rm = TRUE),
-      .groups = "drop"
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
     ) |>
     dplyr::collect()
-}
+  }
 ```
 
 :::
@@ -244,21 +239,19 @@ dplyr::all_equal(.use_dtplyr(df), .use_dplyr(df))
 ```{r}
 #| echo: true
 
-.use_duckdb <- function(.data) {
+.use_duckdb <-
+  function(.data, .fn = dplyr::summarise) {
   .data |>
     arrow::to_duckdb() |>
     dplyr::group_by(col_group) |>
-    dplyr::summarise(
-      value = sum(col_value, na.rm = TRUE),
-      .groups = "drop"
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
     ) |>
     dplyr::collect()
-}
+  }
 ```
 :::
 ::::
-
-同じ結果を返すことを確認します。
 
 ```{r}
 #| echo: true
@@ -267,39 +260,156 @@ dplyr::all_equal(.use_arrow(df), .use_dplyr(df))
 dplyr::all_equal(.use_duckdb(df), .use_dplyr(df))
 ```
 
-## ベンチマーク
+## ベンチマーク (`summarise`)
 
-100グループ、10万グループのグループ2条件、
-100万行、1千万行、1億行の行数3条件の組み合わせ全6条件で、[`bench`](https://bench.r-lib.org/)パッケージによるベンチマークを取ります。
+行数3条件、グループ数3条件の組み合わせ全9条件で、  
+[`bench`](https://bench.r-lib.org/)パッケージによるベンチマークを取ります。
 
 ```{r}
 #| echo: true
 
-results <- bench::press(
-  n_group = c(1e2, 1e5),
-  n_row = c(1e6, 1e7, 1e8),
+res_sum <- bench::press(
+  fn = c("dplyr::summarise"),
+  n_row = c(1e5, 1e6, 1e7),
+  n_col_value = c(1),
+  n_group = c(1e2, 1e3, 1e4),
   {
-    dat <- .gen_data(n_group, n_row)
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    fn <- eval(parse(text = fn))
     bench::mark(
       check = FALSE,
       min_iterations = 5,
-      dplyr = .use_dplyr(dat),
-      dtplyr = .use_dtplyr(dat),
-      arrow = .use_arrow(dat),
-      duckdb = .use_duckdb(dat)
+      dplyr = .use_dplyr(dat, fn),
+      dtplyr = .use_dtplyr(dat, fn),
+      arrow = .use_arrow(dat, fn),
+      duckdb = .use_duckdb(dat, fn)
     )
   }
 )
 ```
 
-## ベンチマーク結果
+## ベンチマーク結果 (`summarise`)
 
 ```{r}
 #| echo: true
+#| fig-align: center
 
-results |> ggplot2::autoplot("violin")
+res_sum |> ggplot2::autoplot("violin")
 ```
 
+## ベンチマーク結果 (`mutate`)
+
+`arrow`はgroupに対する`mutate`非対応、  
+`duckdb`の`group`に対する`mutate`は現状とても遅い（dplyrの10倍）ので省略。
+
+```{r}
+#| echo: false
+#| fig-align: center
+
+res_mut <- bench::press(
+  fn = c("dplyr::mutate"),
+  n_row = c(1e5, 1e6, 1e7),
+  n_col_value = c(1),
+  n_group = c(1e2, 1e3, 1e4),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    fn <- eval(parse(text = fn))
+    bench::mark(
+      check = FALSE,
+      min_iterations = 5,
+      dplyr = .use_dplyr(dat, fn),
+      dtplyr = .use_dtplyr(dat, fn)
+    )
+  }
+)
+
+res_mut |> ggplot2::autoplot("violin")
+```
+
+## ベンチマーク (`summarise` + `across`)
+
+以下のような、`across`で複数列を対象にする集約計算について、  
+列数を変えながらベンチマークを取ってみましょう。
+
+```{.r}
+.use_across_dplyr <-
+  function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    )
+  }
+```
+
+`arrow`は現状`across`未対応なので使えません。
+
+## ベンチマーク結果 (`summarise` + `across`)
+
+```{r}
+#| echo: false
+#| fig-align: center
+
+.use_across_dplyr <- function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    )
+}
+
+.use_across_dtplyr <- function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dtplyr::lazy_dt() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    ) |>
+    dplyr::collect()
+}
+
+.use_across_duckdb <- function(.data, .fn = dplyr::summarise) {
+  .data |>
+    arrow::to_duckdb() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    ) |>
+    dplyr::collect()
+}
+
+res_across_sum <- bench::press(
+  fn = c("dplyr::summarise"),
+  n_row = c(1e4, 1e5, 1e6),
+  n_col_value = c(1, 10, 100),
+  n_group = c(1e4),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    fn <- eval(parse(text = fn))
+    bench::mark(
+      check = FALSE,
+      min_iterations = 5,
+      dplyr = .use_across_dplyr(dat, fn),
+      dtplyr = .use_across_dtplyr(dat, fn),
+      duckdb = .use_across_duckdb(dat, fn)
+    )
+  }
+)
+
+res_across_sum |> ggplot2::autoplot("violin")
+```
 
 ## Parquetからの集約計算
 
