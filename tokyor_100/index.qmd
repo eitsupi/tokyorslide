@@ -277,7 +277,7 @@ res_sum <- bench::press(
     dat <- .gen_data(n_group, n_row, n_col_value)
     fn <- eval(parse(text = fn))
     bench::mark(
-      check = FALSE,
+      check = dplyr::all_equal,
       min_iterations = 5,
       dplyr = .use_dplyr(dat, fn),
       dtplyr = .use_dtplyr(dat, fn),
@@ -315,7 +315,7 @@ res_mut <- bench::press(
     dat <- .gen_data(n_group, n_row, n_col_value)
     fn <- eval(parse(text = fn))
     bench::mark(
-      check = FALSE,
+      check = dplyr::all_equal,
       min_iterations = 5,
       dplyr = .use_dplyr(dat, fn),
       dtplyr = .use_dtplyr(dat, fn)
@@ -399,7 +399,7 @@ res_across_sum <- bench::press(
     dat <- .gen_data(n_group, n_row, n_col_value)
     fn <- eval(parse(text = fn))
     bench::mark(
-      check = FALSE,
+      check = dplyr::all_equal,
       min_iterations = 5,
       dplyr = .use_across_dplyr(dat, fn),
       dtplyr = .use_across_dtplyr(dat, fn),
