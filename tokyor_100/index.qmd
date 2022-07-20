@@ -270,7 +270,7 @@ dplyr::all_equal(.use_duckdb(df), .use_dplyr(df))
 
 res_sum <- bench::press(
   fn = c("dplyr::summarise"),
-  n_row = c(1e5, 1e6, 1e7),
+  n_row = c(1e6, 1e7, 1e8),
   n_col_value = c(1),
   n_group = c(1e2, 1e3, 1e4),
   {
@@ -297,10 +297,12 @@ res_sum <- bench::press(
 res_sum |> ggplot2::autoplot("violin")
 ```
 
+`dtplyr`速い！
+
 ## ベンチマーク結果 (`mutate`)
 
 `arrow`はgroupに対する`mutate`非対応、  
-`duckdb`の`group`に対する`mutate`は現状とても遅い（dplyrの10倍）ので省略。
+`duckdb`の`group`に対する`mutate`は現状とても遅くベンチマークが終わらなかったので省略。
 
 ```{r}
 #| echo: false
@@ -325,6 +327,8 @@ res_mut <- bench::press(
 
 res_mut |> ggplot2::autoplot("violin")
 ```
+
+`dplyr`と`dtplyr`ほぼ互角。
 
 ## ベンチマーク (`summarise` + `across`)
 
@@ -411,7 +415,22 @@ res_across_sum <- bench::press(
 res_across_sum |> ggplot2::autoplot("violin")
 ```
 
-## Parquetからの集約計算
+更に行数を増やすと`duckdb`が最速になりそうに見えますが、私のマシン（RAM16GB割り当て）ではこれ以上のサイズでの実行を完了できず……。
+
+## その他
+
+まとめきれなかったもののベンチマーク色々回してて気付いた結果。
+
+- `dtplyr`の`dplyr::summarise()`は列（計算対象外）が増えるだけで遅くなる事象を確認しました。不要な列はあらかじめ`dplyr::select()`で削除する方が良いかも知れません。
+- `tidyr::pivot_longer()`は`dplyr`が速かったです。
+- ↓みたいなこともできるので組み合わせて使いましょう！
+  ```r
+  mtcars |>
+    arrow::arrow_table() |>
+    arrow::to_duckdb() |>
+    dtplyr::lazy_dt()
+  ```
+  - 資料作成中`arrow::Table`を`dtplyr::lazy_dt()`に渡せないバグを見つけたので修正しました。
 
 # まとめ
 
