@@ -1,0 +1,452 @@
+---
+title: "dtplyr 鬼はええ！<br/>このままdplyrパイプライン<br/>全部data.tableで計算しようぜ！"
+subtitle: "2022-07-23 第100回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#TokyoR"
+    self-contained: true
+    reference-location: document
+engine: knitr
+lang: ja
+execute:
+  cache: true
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+::: {.column width="75%"}
+
+- [@eitsupi](https://twitter.com/eitsupi)
+- 製造業勤務
+  - Excelが嫌になりRを触り初めて3年
+- Dockerイメージ`rocker/r-ver`他のメンテナー
+
+:::
+::::
+
+# [前回](https://eitsupi.github.io/tokyorslide/tokyor_97/)のあらすじ
+
+---
+
+巨大なデータを扱うときにはCSVではなくParquetを使うと便利です。
+
+![](arrow_slide.jpg){fig-align="center" alt="前回発表スライド"}
+
+## 今日の話
+
+- `dplyr`バックエンドの速度比較をやってみた。
+- `dtplyr`の日本語の情報が少ないので共有したい。
+  - [今こそ、data.tableを学ぼう！](https://speakerdeck.com/s_uryu/datatable1130)(2020-08-01)もご確認ください。
+
+:::: {.columns}
+::: {.column width="50%"}
+
+### 対象かも
+
+- ✅`dplyr`派
+- ✅`dbplyr`や`dtplyr`を試す機会のなかった方
+
+:::
+::: {.column width="50%"}
+
+### 対象外かも
+
+- ✅`data.table`派
+
+:::
+::::
+
+# 結論
+
+Q. `data.table`って速いの？
+
+. . .
+
+A. `dtplyr`ですぐに試せるのでやってみましょう！  
+（`tidyverse`パッケージインストール時にインストールされてます！）
+
+# `dtplyr`, `arrow`, `duckdb`
+
+## `dplyr`バックエンド達
+
+`dplyr`で記述したデータ操作を`dplyr`外で実行するパッケージ。
+
+- tydyverse[^dplyrbackends]
+  - [`multidplyr`](https://multidplyr.tidyverse.org/) : Rの計算を分散
+  - [`dtplyr`](https://dtplyr.tidyverse.org/) : [`data.table`](https://rdatatable.gitlab.io/data.table/)のクエリに変換して計算実行
+  - [`dbplyr`](https://dbplyr.tidyverse.org/) : [`duckdb`](https://duckdb.org/docs/api/r)などのDBにSQLを送信して計算実行
+- その他
+  - [`sparklyr`](https://spark.rstudio.com/) : SparkにSQLを送信して計算実行
+  - [`arrow`](https://arrow.apache.org/docs/r/) : Arrow C++ライブラリの計算エンジンAceroで計算実行
+
+[^dplyrbackends]: [dplyr backends: multidplyr 0.1.0, dtplyr 1.1.0, dbplyr 2.1.0](https://www.tidyverse.org/blog/2021/02/dplyr-backends/)
+
+## どれが速いか気になる！
+
+- `dtplyr`, `arrow`, `dbplyr`+`duckdb`は同じような目的（ローカル実行で集約計算などを速くしたい）で使用されます。
+  - [前回の発表](https://eitsupi.github.io/tokyorslide/tokyor_97/)で`arrow`と共に`duckdb`を紹介したところ、  
+  「`duckdb`の使いどころが分からない」との感想をいただいた。
+- 有名な[H2Oベンチマーク](https://h2oai.github.io/db-benchmark/)は最後の実行が2021年7月、
+  まだ`arrow`は`dplyr::summarise`を実行できなかった頃の結果。
+
+# ベンチマーク
+
+## 対象パッケージ
+
+```{r}
+#| echo: true
+
+library(dplyr)
+library(dtplyr)
+library(arrow)
+library(duckdb)
+```
+
+. . .
+
+これらで、以下のようなグループ毎の集約計算を行います。
+
+```{r}
+#| echo: true
+
+mtcars |>
+  dplyr::group_by(cyl) |>
+  dplyr::summarise(sum = sum(wt, na.rm = TRUE), .groups = "drop")
+```
+
+## 環境{.smaller}
+
+```{r}
+sessionInfo()
+```
+
+## 準備 1/3
+
+行数、列数、グループ数を変えてベンチマークするために、  
+データフレームを以下のような関数で作れるようにしておきます。
+
+```{r}
+#| echo: true
+
+.gen_data <- \(n_group, n_row, n_col_value, .seed = 1) {
+  groups <- seq_len(n_group) |>
+    rep_len(n_row) |>
+    as.character()
+
+  set.seed(.seed)
+
+  runif(n_row * n_col_value, min = 0, max = 100) |>
+    round() |>
+    matrix(ncol = n_col_value) |>
+    tibble::as_tibble(
+      .name_repair = \(x) paste0("col_value_", seq_len(n_col_value))
+    ) |>
+    dplyr::mutate(col_group = groups, .before = 1)
+}
+```
+
+## 準備 2/3
+
+各パッケージによる計算も関数化しておきます。
+
+::::{.columns}
+:::{.column width="50%"}
+
+### dplyr
+
+```{r}
+#| echo: true
+
+.use_dplyr <-
+  function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
+    )
+  }
+```
+
+:::
+:::{.column width="50%"}
+
+### dtplyr
+
+```{r}
+#| echo: true
+
+.use_dtplyr <-
+  function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dtplyr::lazy_dt() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
+    ) |>
+    dplyr::collect()
+  }
+```
+:::
+::::
+
+二つの関数が同じ結果を返すことを確認します。
+
+```{r}
+#| echo: true
+
+df <- .gen_data(3, 300, 10)
+dplyr::all_equal(.use_dtplyr(df), .use_dplyr(df))
+```
+
+
+## 準備 3/3
+
+各パッケージによる計算も関数化しておきます。
+
+::::{.columns}
+:::{.column width="50%"}
+
+### arrow
+
+```{r}
+#| echo: true
+
+.use_arrow <-
+  function(.data, .fn = dplyr::summarise) {
+  .data |>
+    arrow::arrow_table() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
+    ) |>
+    dplyr::collect()
+  }
+```
+
+:::
+:::{.column width="50%"}
+
+### duckdb
+
+```{r}
+#| echo: true
+
+.use_duckdb <-
+  function(.data, .fn = dplyr::summarise) {
+  .data |>
+    arrow::to_duckdb() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      value = sum(col_value_1, na.rm = TRUE),
+    ) |>
+    dplyr::collect()
+  }
+```
+:::
+::::
+
+```{r}
+#| echo: true
+
+dplyr::all_equal(.use_arrow(df), .use_dplyr(df))
+dplyr::all_equal(.use_duckdb(df), .use_dplyr(df))
+```
+
+## ベンチマーク (`summarise`)
+
+行数3条件、グループ数3条件の組み合わせ全9条件で、  
+[`bench`](https://bench.r-lib.org/)パッケージによるベンチマークを取ります。
+
+```{r}
+#| echo: true
+
+res_sum <- bench::press(
+  fn = c("dplyr::summarise"),
+  n_row = c(1e6, 1e7, 1e8),
+  n_col_value = c(1),
+  n_group = c(1e2, 1e3, 1e4),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    fn <- eval(parse(text = fn))
+    bench::mark(
+      check = dplyr::all_equal,
+      min_iterations = 5,
+      dplyr = .use_dplyr(dat, fn),
+      dtplyr = .use_dtplyr(dat, fn),
+      arrow = .use_arrow(dat, fn),
+      duckdb = .use_duckdb(dat, fn)
+    )
+  }
+)
+```
+
+## ベンチマーク結果 (`summarise`)
+
+```{r}
+#| echo: true
+#| fig-align: center
+
+res_sum |> ggplot2::autoplot("violin")
+```
+
+`dtplyr`速い！
+
+## ベンチマーク結果 (`mutate`)
+
+`arrow`はgroupに対する`mutate`非対応、  
+`duckdb`の`group`に対する`mutate`は現状とても遅くベンチマークが終わらなかったので省略。
+
+```{r}
+#| echo: false
+#| fig-align: center
+
+res_mut <- bench::press(
+  fn = c("dplyr::mutate"),
+  n_row = c(1e5, 1e6, 1e7),
+  n_col_value = c(1),
+  n_group = c(1e2, 1e3, 1e4),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    fn <- eval(parse(text = fn))
+    bench::mark(
+      check = dplyr::all_equal,
+      min_iterations = 5,
+      dplyr = .use_dplyr(dat, fn),
+      dtplyr = .use_dtplyr(dat, fn)
+    )
+  }
+)
+
+res_mut |> ggplot2::autoplot("violin")
+```
+
+`dplyr`と`dtplyr`ほぼ互角。
+
+## ベンチマーク (`summarise` + `across`)
+
+以下のような、`across`で複数列を対象にする集約計算について、  
+列数を変えながらベンチマークを取ってみましょう。
+
+```{.r}
+.use_across_dplyr <-
+  function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    )
+  }
+```
+
+`arrow`は現状`across`未対応なので使えません。
+
+## ベンチマーク結果 (`summarise` + `across`)
+
+```{r}
+#| echo: false
+#| fig-align: center
+
+.use_across_dplyr <- function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    )
+}
+
+.use_across_dtplyr <- function(.data, .fn = dplyr::summarise) {
+  .data |>
+    dtplyr::lazy_dt() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    ) |>
+    dplyr::collect()
+}
+
+.use_across_duckdb <- function(.data, .fn = dplyr::summarise) {
+  .data |>
+    arrow::to_duckdb() |>
+    dplyr::group_by(col_group) |>
+    .fn(
+      dplyr::across(
+        tidyselect::starts_with("col_value"),
+        .fns = ~ sum(.x, na.rm = TRUE)
+      )
+    ) |>
+    dplyr::collect()
+}
+
+res_across_sum <- bench::press(
+  fn = c("dplyr::summarise"),
+  n_row = c(1e4, 1e5, 1e6),
+  n_col_value = c(1, 10, 100),
+  n_group = c(1e4),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    fn <- eval(parse(text = fn))
+    bench::mark(
+      check = dplyr::all_equal,
+      min_iterations = 5,
+      dplyr = .use_across_dplyr(dat, fn),
+      dtplyr = .use_across_dtplyr(dat, fn),
+      duckdb = .use_across_duckdb(dat, fn)
+    )
+  }
+)
+
+res_across_sum |> ggplot2::autoplot("violin")
+```
+
+更に行数を増やすと`duckdb`が最速になりそうに見えますが、私のマシン（RAM16GB割り当て）ではこれ以上のサイズでの実行を完了できず……。
+
+## その他
+
+まとめきれなかったもののベンチマーク色々回してて気付いた結果。
+
+- `dtplyr`の`dplyr::summarise()`は列（計算対象外）が増えるだけで遅くなる事象を確認しました。不要な列はあらかじめ`dplyr::select()`で削除する方が良いかも知れません。
+- `tidyr::pivot_longer()`は`dplyr`が速かったです。
+- ↓みたいなこともできるので組み合わせて使いましょう！
+  ```r
+  mtcars |>
+    arrow::arrow_table() |>
+    arrow::to_duckdb() |>
+    dtplyr::lazy_dt()
+  ```
+  - 資料作成中`arrow::Table`を`dtplyr::lazy_dt()`に渡せないバグを見つけたので修正しました。
+
+# まとめ
+
+::: {.incremental}
+- `data.table`はマジで速い！
+- `dtplyr`で敷居も低い！
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>

@@ -1,0 +1,10 @@
+services:
+  r-container:
+    build:
+      context: ./tokyor_100
+    volumes:
+      - ../:/workspace
+    working_dir: /workspace/tokyor_100
+    user: rstudio
+    command: |
+      quarto render index.qmd
