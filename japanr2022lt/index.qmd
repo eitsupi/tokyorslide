@@ -60,15 +60,17 @@ execute:
 
 ## prqlrのひみつ
 
+::: {.incremental}
 - `Rust`の`prql-compiler`がPRQLをSQLに変換するぞ！
 - Pythonの`prql-python`、JavaScriptの`prql-js`のようにRのprql-compilerバインディングも簡単にできるのでは？と思って作り始めたぞ！
   - `extendr`というのを使うと何か良い感じにできるらしいと聞いたことがあったぞ！[^1]
+:::
 
 [^1]: [RパッケージでRustを使うには: extendr入門](https://tokyor92-slides-rust-and-r.vercel.app)
 
 # ...Rust?
 
-## Rustの開発環境……確か……
+## Rustで開発……確か……
 
 ::: {.incremental}
 - らすとあっぷ？
