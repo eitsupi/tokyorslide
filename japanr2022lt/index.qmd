@@ -1,0 +1,191 @@
+---
+title: Dev Container Features<br/>で合体だ！！
+subtitle: "2022-12-10 Japan.R 2022<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Japan.R 2022"
+    self-contained: true
+    reference-location: document
+engine: knitr
+lang: ja
+execute:
+  cache: true
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+::: {.column width="75%"}
+
+- [@eitsupi](https://twitter.com/eitsupi)
+- 製造業勤務
+  - Excelが嫌になりRを触り初めて3年
+- Dockerイメージ`rocker/r-ver`他のメンテナー
+- 2022年はApache Arrowにかなりコミットしました
+
+:::
+::::
+
+# 最近Rパッケージを作りました
+
+## [prqlr](https://eitsupi.github.io/prqlr/)
+
+::: {.incremental}
+- [PRQL](https://prql-lang.org/)をSQLに変換する関数を提供
+- `tidyquery`パッケージ等と組み合わせて使えます！
+:::
+
+. . .
+
+```{r}
+#| echo: true
+
+"from mtcars | filter cyl > 3 | select [cyl, am, disp] | sort [-cyl] | take 4" |>
+  prqlr::prql_to_sql() |>
+  tidyquery::query()
+```
+
+## prqlrのひみつ
+
+::: {.incremental}
+- `Rust`の`prql-compiler`がPRQLをSQLに変換するぞ！
+- Pythonの`prql-python`、JavaScriptの`prql-js`のようにRのprql-compilerバインディングも簡単にできるのでは？と思って作り始めたぞ！
+  - `extendr`というのを使うと何か良い感じにできるらしいと聞いたことがあったぞ！[^1]
+:::
+
+[^1]: [RパッケージでRustを使うには: extendr入門](https://tokyor92-slides-rust-and-r.vercel.app)
+
+# ...Rust?
+
+## Rustで開発……確か……
+
+::: {.incremental}
+- らすとあっぷ？
+- かーご？
+- らすとあならいざー？
+:::
+
+. . .
+
+→ **Dev ContainerでOK。手動設定不要。**
+
+# Dev Container
+
+## Dev Containerとは
+
+::: {.incremental}
+- 前身はMicrosoft社の`VSCode Remote - Container`拡張機能（2019年5月～）[^2]
+- 開発環境をDockerコンテナとしてビルド、ソースコードを管理・共有できるようにする
+- GitHub Codespacesでも使用されている（2019年11月～）[^3]
+- 2022年に仕様がオープン化され、OSSのCLIから利用できるようになった
+:::
+
+[^2]: [「Visual Studio Code」でリモート開発 ～Microsoftが新しい拡張機能パックをリリース - 窓の杜](https://forest.watch.impress.co.jp/docs/news/1183384.html)
+[^3]: [Microsoft、クラウドコードエディター「Visual Studio Online」をパブリックプレビュー - 窓の杜](https://forest.watch.impress.co.jp/docs/news/1216495.html)
+
+## Dev Containerを使うには？
+
+. . .
+
+```json
+{
+  "name": "Rust",
+  "image": "mcr.microsoft.com/devcontainers/rust:0-1-bullseye"
+}
+```
+
+::: {.incremental}
+1. 以上のような`.devcontainer.json`ファイルをGitHubリポジトリのルートに配置します。
+2. GitHub上で「Create codespace on main」みたいな感じのボタンを押します。
+3. Rust開発環境セットアップ済VSCode起動！！
+:::
+
+## なるほど
+
+::: {.incremental}
+- 確かに**Rust**の開発環境を簡単にセットアップできました。
+- でも、よく考えると今ほしいのは**Rust**と**R**の開発環境でしたね？
+:::
+
+. . .
+
+→ **Dev Container Featuresで欲しい機能を組み合わせましょう。**
+
+## Dev Container Features
+
+::: {.incremental}
+- 前身は`VSCode Remote - Container`拡張機能に組み込まれていた「レゴブロック」のように組み合わせられるシェルスクリプト。（2021年9月～）[^4]
+- `Dockerfile`および`devcontainer.json`ファイルの断片のようなもの。
+- 「このコンテナにアレを足したい！」といったとき、一々Dockerfileを書かずにアレをコンテナ内にインストールできる。
+:::
+
+[^4]: [[Tracking] Script and config updates to support simplified selection of "features"](https://github.com/microsoft/vscode-dev-containers/issues/1044)
+
+## 合体！！
+
+例えば「R開発用コンテナにRust開発環境も追加したい」
+
+. . .
+
+```json
+{
+	"name": "R plus Rust",
+	"image": "ghcr.io/rocker-org/devcontainer/r-ver:4",
+	"features": {
+		"ghcr.io/devcontainers/features/rust:1": {
+			"version": "latest"
+		}
+	},
+	"postCreateCommand": "R -q -e 'remotes::install_github(\"extendr/rextendr\")'"
+}
+```
+
+. . .
+
+あるいは「R開発用コンテナに最新のquarto-cliを設定したい」
+
+. . .
+
+```json
+{
+  "name": "R plus quarto-cli",
+  "image": "ghcr.io/rocker-org/devcontainer/tidyverse:4",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/quarto-cli:1": {}
+  }
+}
+```
+
+## もちろんこのスライドもCodespacesで作成されました
+
+![](codespaces.png){fig-align="center"}
+
+ローカルのVSCodeからCodespacesに接続するとクラウドであることを忘れる使い心地。
+
+## まとめ
+
+::: {.incremental}
+- Dev Containerを使うと開発環境を簡単に構築できるぞ！
+- Codespacesが全ユーザーに開放されたのでブラウザ上からDev Containerをフルに使えるぞ！
+- RもDev Containerからおそらく良い感じに使えるぞ！
+  - Rocker Projectのサイトに[ドキュメント](https://rocker-project.org/images/devcontainer)も用意したぞ！
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
