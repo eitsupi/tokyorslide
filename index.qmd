@@ -7,3 +7,4 @@ title: "資料"
 - [Japan.R 2021 ショートセッション rocker/r-ver一族のビルドシステムを大改修した話](./japanr2021lt/rocker.html)
 - [第97回R勉強会@東京（#TokyoR）応用セッション Apache Arrowの話](./tokyor_97/index.html)
 - [第100回R勉強会@東京（#TokyoR）dplyrバックエンドベンチマーク](./tokyor_100/index.html)
+- [Japan.R 2022 Dev Container Features](./japanr2022lt/index.html)
