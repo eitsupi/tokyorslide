@@ -1,0 +1,208 @@
+---
+title: >
+  【特報】<br/>
+  <font color="crimson">Acero</font> 対
+  <font color="yellow">DuckDB</font> 対
+  <font color="gray">Pola</font><font color="orange">rs</font><br/>on
+  <font color="royalblue">R</font>
+subtitle: "2023-01-21 第103回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    self-contained: true
+    reference-location: document
+lang: ja
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+::: {.column width="75%"}
+
+- [@eitsupi](https://twitter.com/eitsupi)
+- Excelが嫌になりRを触り初めて4年弱
+- Dockerイメージ`rocker/r-ver`他のメンテナー
+- 昨日初RパッケージがCRANリリースされました🎉
+
+:::
+::::
+
+# 2022年末……
+
+---
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+<blockquote class="twitter-tweet"><p lang="ja" dir="ltr">うわああああ！<br>r-polarsがpola-rs組織に移動しとる！<a href="https://t.co/ITA4w6tOPF">https://t.co/ITA4w6tOPF</a></p>&mdash; えいつぴ (@eitsupi) <a href="https://twitter.com/eitsupi/status/1608013971428368385?ref_src=twsrc%5Etfw">December 28, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+:::
+
+::: {.column width="50%"}
+
+r-polars襲来！
+
+:::
+
+::::
+
+## Polarsとは
+
+- "Blazingly fast DataFrames in Rust, Python & Node.js"
+  - 内部でApache Arrow形式を使用するRust製の高速なテーブルデータ操作パッケージ。
+  - Rの`data.table`パッケージの高速さのアピールに使用された[`h2oai/db-benchmark`](https://github.com/h2oai/db-benchmark)（最終更新2021年7月）の数々の項目でPython版polarsが上位に。
+- メソッドチェーンによる分かりやすいAPI。
+- Windows関数なども利用可能で多機能。
+
+## h2oベンチマーク
+
+![](h2o-bench.png){fig-align="center"}
+
+出典：<https://h2oai.github.io/db-benchmark/>, 2023年1月21日閲覧
+
+# しかしそれは1年半前の話……
+
+# Acero
+
+## Aceroとは
+
+- 2021年当時には名無しだった、Apache Arrow C++ライブラリのストリーミングクエリエンジン。（今後libaceroとして分割されそう[^libacero]）
+- Rの`arrow`パッケージの`dplyr`APIで呼び出されるやつ。
+- 2021年のh2oベンチマーク実行結果に「Arrow」と表示されているのはこれを指している。
+  - ……が、当時は`summarise`にも`join`にも対応していなかったので何もしておらず全部素の`dplyr`で計算されていたはず。
+
+[^libacero]: <https://github.com/apache/arrow/issues/15280>
+
+# DuckDB
+
+## DuckDBとは
+
+- SQLiteライクに使用できる組み込み向け列指向RDBMS。
+- 公式でRを含む多数の言語のパッケージが存在し、広く使用されている。Quartoの`{ojs}`コードブロック内でも何もせずに呼べる。
+- Postgres互換のSQLを採用。
+  - 「FROM句から始まるクエリ」「SELECT内でEXCLUDEによる列の除外」などの使い勝手改良にも積極的。
+- 「ビッグデータは死んだ。イージーデータ万歳」[^big_data_is_dead]
+- 「あなたのラップトップはあなたのデータウェアハウスよりも高速です」[^laptop_is_faster]
+
+[^big_data_is_dead]: [Big Data is dead. Long live Easy Data.](https://motherduck.com/)
+[^laptop_is_faster]: [Your laptop is faster than your data warehouse.Why wait for the cloud?](https://motherduck.com/)
+
+## DuckDBLabs所属の方がフォークした[^h2o-fork]h2oベンチマーク最新の結果
+
+[^h2o-fork]: <https://github.com/Tmonster/h2oai-db-benchmark>
+
+![](h2o-bench-new.png){fig-align="center" height="400"}
+
+出典：<https://tmonster.github.io/h2oai-db-benchmark/>, 2023年1月21日閲覧
+
+# on R
+
+## 遅延評価とプッシュダウン
+
+Parquetに対するクエリでは遅延評価を行い不要な行や列を読み飛ばせるため、CSVを読み込んで処理する場合に比べて高速かつ省メモリで処理を完了できる。
+
+いつものParquet[^parquet]（およそ600万行）で試してみましょう。
+
+[^parquet]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://arrow.apache.org/blog/2021/12/03/arrow-duckdb/)
+
+```r
+curl::curl_download(
+  "https://github.com/duckdb/duckdb-data/releases/download/v1.0/lineitemsf1.snappy.parquet",
+  "lineitemsf1.snappy.parquet"
+)
+```
+
+## Acero
+
+```r
+library(arrow, warn.conflicts = FALSE)
+library(dplyr, warn.conflicts = FALSE)
+
+open_dataset("lineitemsf1.snappy.parquet") |>
+  filter(
+    l_shipdate >= "1994-01-01",
+    l_shipdate < "1995-01-01",
+    l_discount >= 0.05,
+    l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  collect()
+```
+
+## DuckDB
+
+```r
+library(duckdb)
+
+con <- dbConnect(duckdb(), ":memory:")
+
+query <- "
+FROM
+  'lineitemsf1.snappy.parquet'
+SELECT
+  SUM(l_extendedprice * l_discount) AS revenue
+WHERE
+  l_shipdate >= '1994-01-01'
+  AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05
+  AND l_discount < 0.07
+  AND l_quantity < 24
+"
+
+dbGetQuery(con, query)
+```
+
+## DuckDB (dbplyr)
+
+```r
+library(duckdb)
+library(dplyr, warn.conflicts = FALSE)
+library(dbplyr, warn.conflicts = FALSE)
+
+con <- dbConnect(duckdb(), ":memory:")
+
+tbl(con, "lineitemsf1.snappy.parquet") |>
+  filter(
+    l_shipdate >= "1994-01-01",
+    l_shipdate < "1995-01-01",
+    l_discount >= 0.05,
+    l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  collect()
+```
+
+## Polars
+
+```r
+library(rpolars)
+
+scan_parquet("lineitemsf1.snappy.parquet")$filter(
+  (pl$col("l_shipdate") >= "1994-01-01") &
+    (pl$col("l_shipdate") < "1995-01-01") &
+    (pl$col("l_discount") >= 0.05) &
+    (pl$col("l_discount") < 0.07) &
+    (pl$col("l_quantity") < 24)
+)$select(
+  (pl$col("l_extendedprice") * pl$col("l_discount"))$sum()$alias("revenue")
+)$collect() |>
+  as.data.frame()
+```
+
+# 衝撃の結末を君の目で確かめよう！
