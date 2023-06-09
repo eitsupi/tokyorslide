@@ -1,0 +1,9 @@
+{
+  "name": "tokyor_106_duckdb",
+  "image": "ghcr.io/rocker-org/devcontainer/r-ver:4",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/quarto-cli:1": {},
+    "ghcr.io/rocker-org/devcontainer-features/renv-cache": {},
+    "ghcr.io/eitsupi/devcontainer-features/duckdb-cli:1": {}
+  }
+}
