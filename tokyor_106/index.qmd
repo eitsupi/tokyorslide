@@ -108,7 +108,218 @@ execute:
 - Parquetの中身を確認するだけでも便利です
 - `duckdb -c 'from foo.csv' --markdown >foo.md`のようにMarkdownへの変換もおまかせ！
 
-[^0.8.0]: 現在最新の0.8.0ではオートコンプリートが壊れている模様 ([duckdb/duckdb#7564](https://github.com/duckdb/duckdb/issues/7564))
+[^0.8.0]: しかし現在最新の0.8.0ではオートコンプリートが壊れているようです。 ([duckdb/duckdb#7564](https://github.com/duckdb/duckdb/issues/7564))
+
+## サンプルデータ
+
+サンプルとして`dplyr`に含まれている`starwars`データの元になっているCSVファイルをダウンロードします。
+
+```sh
+curl -sL https://raw.githubusercontent.com/tidyverse/dplyr/v1.1.2/data-raw/starwars.csv -o starwars.csv
+```
+
+. . .
+
+`read_csv_auto`関数でデータを読み込みます。
+
+```sql
+SELECT *
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+LIMIT 3
+```
+
+```
+┌────────────────┬────────┬────────┬───┬──────────────────────┬──────────────────────┐
+│      name      │ height │  mass  │ … │       vehicles       │      starships       │
+│    varchar     │ int64  │ double │   │       varchar        │       varchar        │
+├────────────────┼────────┼────────┼───┼──────────────────────┼──────────────────────┤
+│ Luke Skywalker │    172 │   77.0 │ … │ Snowspeeder, Imper…  │ X-wing, Imperial s…  │
+│ C-3PO          │    167 │   75.0 │ … │                      │                      │
+│ R2-D2          │     96 │   32.0 │ … │                      │                      │
+├────────────────┴────────┴────────┴───┴──────────────────────┴──────────────────────┤
+│ 3 rows                                                        14 columns (5 shown) │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## DuckDBのSQL: `FROM`句で開始するクエリ
+
+DuckDBでは`SELECT`句ではなく`FROM句`でクエリを開始できます。
+
+. . .
+
+これ↓は
+
+```sql
+SELECT *
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+LIMIT 5
+```
+
+. . .
+
+こう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT *
+LIMIT 5
+```
+
+. . .
+
+`SELECT *`の省略も許されています。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+LIMIT 5
+```
+
+## DuckDBのSQL: 複数列の選択
+
+`dplyr`だと`tidyselect`で↓のように書ける\
+「列名のパターンで複数列を選択する」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::select(matches("s$")) |>
+  head(5)
+```
+
+## DuckDBのSQL: 複数列の選択
+
+DuckDBは`COLUMNS`を使ってこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT COLUMNS('s$')
+LIMIT 5
+```
+
+```
+┌────────┬─────────┬───┬──────────────────────┬──────────────────────┐
+│  mass  │ species │ … │       vehicles       │      starships       │
+│ double │ varchar │   │       varchar        │       varchar        │
+├────────┼─────────┼───┼──────────────────────┼──────────────────────┤
+│   77.0 │ Human   │ … │ Snowspeeder, Imper…  │ X-wing, Imperial s…  │
+│   75.0 │ Droid   │ … │                      │                      │
+│   32.0 │ Droid   │ … │                      │                      │
+│  136.0 │ Human   │ … │                      │ TIE Advanced x1      │
+│   49.0 │ Human   │ … │ Imperial Speeder B…  │                      │
+├────────┴─────────┴───┴──────────────────────┴──────────────────────┤
+│ 5 rows                                         5 columns (4 shown) │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+## DuckDBのSQL: 列の置換
+
+`dplyr`だと↓のように書ける\
+「特定の列を置換する」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::mutate(height = height * 1000) |>
+  head(5)
+```
+
+## DuckDBのSQL: 列の置換
+
+DuckDBでは`REPLACE`を使ってこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT * REPLACE (height * 1000 AS height)
+LIMIT 5
+```
+
+```
+┌────────────────┬────────┬────────┬───┬──────────────────────┬──────────────────────┐
+│      name      │ height │  mass  │ … │       vehicles       │      starships       │
+│    varchar     │ int64  │ double │   │       varchar        │       varchar        │
+├────────────────┼────────┼────────┼───┼──────────────────────┼──────────────────────┤
+│ Luke Skywalker │ 172000 │   77.0 │ … │ Snowspeeder, Imper…  │ X-wing, Imperial s…  │
+│ C-3PO          │ 167000 │   75.0 │ … │                      │                      │
+│ R2-D2          │  96000 │   32.0 │ … │                      │                      │
+│ Darth Vader    │ 202000 │  136.0 │ … │                      │ TIE Advanced x1      │
+│ Leia Organa    │ 150000 │   49.0 │ … │ Imperial Speeder B…  │                      │
+├────────────────┴────────┴────────┴───┴──────────────────────┴──────────────────────┤
+│ 5 rows                                                        14 columns (5 shown) │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## DuckDBのSQL: `DISTINCT ON`
+
+`dplyr`だと↓のように書ける\
+「グループ毎に最大の値を持つ行だけを残す」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::select(sex, name, mass) |>
+  dplyr::slice_max(mass, n = 1, by = sex)
+```
+
+## DuckDBのSQL: `DISTINCT ON`
+
+DuckDBは`DISTINCT ON`でこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT DISTINCT ON (sex)
+  sex, name, mass
+ORDER BY mass DESC
+```
+
+```
+┌────────────────┬───────────────────────┬────────┐
+│      sex       │         name          │  mass  │
+│    varchar     │        varchar        │ double │
+├────────────────┼───────────────────────┼────────┤
+│ hermaphroditic │ Jabba Desilijic Tiure │ 1358.0 │
+│ male           │ Grievous              │  159.0 │
+│ none           │ IG-88                 │  140.0 │
+│ female         │ Beru Whitesun lars    │   75.0 │
+│                │ Sly Moore             │   48.0 │
+└────────────────┴───────────────────────┴────────┘
+```
+
+## DuckDBのSQL: `QUALIFY`句
+
+`dplyr`だと↓のように書ける\
+「グループ毎に上位n行を残す」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::select(sex, name, mass) |>
+  dplyr::slice_max(mass, n = 2, by = sex, with_ties = FALSE)
+```
+
+## DuckDBのSQL: `QUALIFY`句
+
+DuckDBは`QUALIFY`句でこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT
+  sex, name, mass
+QUALIFY
+  row_number() over (partition by sex order by mass desc) <= 2
+```
+
+```
+┌────────────────┬───────────────────────┬────────┐
+│      sex       │         name          │  mass  │
+│    varchar     │        varchar        │ double │
+├────────────────┼───────────────────────┼────────┤
+│ female         │ Beru Whitesun lars    │   75.0 │
+│ female         │ Shaak Ti              │   57.0 │
+│                │ Sly Moore             │   48.0 │
+│                │ Ric Olié              │        │
+│ hermaphroditic │ Jabba Desilijic Tiure │ 1358.0 │
+│ male           │ Grievous              │  159.0 │
+│ male           │ Darth Vader           │  136.0 │
+│ none           │ IG-88                 │  140.0 │
+│ none           │ C-3PO                 │   75.0 │
+└────────────────┴───────────────────────┴────────┘
+```
 
 # DuckDBの速度
 
@@ -116,7 +327,7 @@ execute:
 
 ## テストデータ
 
-DuckDBのリポジトリに置かれているいつものParquet[^parquet]をダウンロードします（※手抜き）
+DuckDBのリポジトリに置かれているいつものParquet[^parquet]をダウンロードします。
 
 [^parquet]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://arrow.apache.org/blog/2021/12/03/arrow-duckdb/)
 
@@ -380,8 +591,21 @@ toc()
 
 ## 参考：duckplyr (2/2)
 
-```{r}
+```{.r}
 #| label: duckplyr
 #| eval: true
 #| echo: false
 ```
+
+# まとめ
+
+::: {.incremental}
+
+- DuckDBは手軽 → すぐに使い始めましょう！
+- DuckDBは高速 → ちょっと速度測ってみましょう！
+
+:::
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
