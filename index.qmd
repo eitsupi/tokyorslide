@@ -9,4 +9,4 @@ title: "資料"
 - [第100回R勉強会@東京（#TokyoR）dplyrバックエンドベンチマーク](./tokyor_100/index.html)
 - [Japan.R 2022 Dev Container Features](./japanr2022lt/index.html)
 - [第103回R勉強会@東京（#TokyoR）LT 【特報】Acero対DuckDB対Polars on R](./tokyor_103lt/index.html)
-- [第103回R勉強会@東京（#TokyoR）LT 【特報】Acero対DuckDB対Polars on R](./tokyor_106/index.html)
+- [第106回R勉強会@東京（#TokyoR）応用セッション すごいぞはやいぞDuckDB](./tokyor_106/index.html)
