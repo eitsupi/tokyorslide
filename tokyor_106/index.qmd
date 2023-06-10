@@ -1,0 +1,611 @@
+---
+title: すごいぞはやいぞ<font color="yellow">DuckDB</font>
+subtitle: "2023-06-10 第106回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    # self-contained: true
+    reference-location: document
+    code-fold: false
+engine: knitr
+lang: ja
+execute:
+  cache: true
+  echo: true
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 大手製造業勤務
+- Excelが嫌になりRを触り初めて4年
+  - Dockerイメージ`rocker/r-ver`他のメンテナー
+- データ基盤？の立ち上げを行い、SQLを触り始める
+  <!-- - 近況：Redshiftに翻弄される
+    - ParquetをAthena経由でロードすると\
+      UTCアジャストTimestampがタイムゾーンなしTimestampになる問題
+    - interval型使えないんですか！？
+    - DISTINCT ON使えないんですか！！？？ -->
+- 最近は[PRQL](https://github.com/PRQL/prql)界隈によく出没
+
+:::
+
+::::
+
+# DuckDB
+
+- SQLiteのようなRDBMS、だけど分析用途に特化
+- 2019年、オランダ国立情報数学研究所（CWI）発
+  - 現在は非営利団体DuckDB Foundationが保有
+  - CWIからスピンオフしたDuckDB Labs社メインで開発中
+
+<https://duckdblabs.com/news/2021/07/14/spin-off-company-DuckDB-Labs.html>
+
+
+## すごいぞDuckDB
+
+- 様々な環境・言語上で動作
+  - C、C++、CLI、Julia、Java、Node.js、ODBC、Python、**R**、Rust、Scala、Swift、Wasm
+- リッチで使いやすいSQL
+  - Postgres準拠 + 独自拡張
+    <!-- - `FROM`句で開始するクエリ
+    - 特定の列を除外：`SELECT * EXCLUDE (foo)` (BigQueryなど)
+    - 複数列に同じ計算を実行：`SELECT MIN(COLUMNS(*))` (Clickhouse)
+    - グループから1行抽出：`SELECT DISTINCT ON (foo) bar` (Postgres)
+    - Windows関数による抽出：`QUALIFY`句 (Snowflake)
+    - ... -->
+- 豊富な入出力
+  <!-- - CSV、JSON、Parquetファイルに対する直接クエリ -->
+  - PythonとR上でのpandas.DataFrame、R DataFrame、Arrow Tableに対する直接クエリ
+- 拡張機能
+
+## はやいぞDuckDB
+
+- 4月にDuckDB Labsが復活させた[^h2oai][H2O.aiベンチマーク](https://duckdblabs.github.io/db-benchmark/)で\
+  DuckDB 0.8はトップクラスの成績。
+- 開発も早い
+  - 約3ヶ月毎の機能リリース
+  - バグ報告 → 4分で返信 → 詳細を伝えた後15分後にはPRでバグ修正 ([duckdb/duckdb#5916](https://github.com/duckdb/duckdb/pull/5916))
+
+[^h2oai]: [The Return of the H2O.ai Database-like Ops Benchmark](https://duckdb.org/2023/04/14/h2oai.html)
+
+# DuckDBのSQL
+
+## DuckDBを動かしてみよう (1/2)
+
+### [DuckDB Web Shell](https://shell.duckdb.org/)
+
+- ブラウザ上でDuckDBを動かして動作を確認できます
+- ファイルアップロードにも対応！
+  - `.files add`コマンドでローカルのファイルをアップロードして\
+    クエリの対象にできます
+
+## DuckDBを動かしてみよう (2/2)
+
+### [DuckDB CLI](https://duckdb.org/docs/api/cli)
+
+- 単一バイナリのCLI、DLしてその辺に置くだけで動きます
+- Homebrewやwingetとかでもインストールできます
+- 表示がリッチでオートコンプリートも効き[^0.8.0]、使い勝手○
+- Parquetの中身を確認するだけでも便利です
+- `duckdb -c 'from foo.csv' --markdown >foo.md`のようにMarkdownへの変換もおまかせ！
+
+[^0.8.0]: しかし現在最新の0.8.0ではオートコンプリートが壊れているようです。 ([duckdb/duckdb#7564](https://github.com/duckdb/duckdb/issues/7564))
+
+## サンプルデータ
+
+サンプルとして`dplyr`に含まれている`starwars`データの元になっているCSVファイルをダウンロードします。
+
+```sh
+curl -sL https://raw.githubusercontent.com/tidyverse/dplyr/v1.1.2/data-raw/starwars.csv -o starwars.csv
+```
+
+. . .
+
+`read_csv_auto`関数でデータを読み込みます。
+
+```sql
+SELECT *
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+LIMIT 3
+```
+
+```
+┌────────────────┬────────┬────────┬───┬──────────────────────┬──────────────────────┐
+│      name      │ height │  mass  │ … │       vehicles       │      starships       │
+│    varchar     │ int64  │ double │   │       varchar        │       varchar        │
+├────────────────┼────────┼────────┼───┼──────────────────────┼──────────────────────┤
+│ Luke Skywalker │    172 │   77.0 │ … │ Snowspeeder, Imper…  │ X-wing, Imperial s…  │
+│ C-3PO          │    167 │   75.0 │ … │                      │                      │
+│ R2-D2          │     96 │   32.0 │ … │                      │                      │
+├────────────────┴────────┴────────┴───┴──────────────────────┴──────────────────────┤
+│ 3 rows                                                        14 columns (5 shown) │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## DuckDBのSQL: `FROM`句で開始するクエリ
+
+DuckDBでは`SELECT`句ではなく`FROM句`でクエリを開始できます。
+
+. . .
+
+これ↓は
+
+```sql
+SELECT *
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+LIMIT 5
+```
+
+. . .
+
+こう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT *
+LIMIT 5
+```
+
+. . .
+
+`SELECT *`の省略も許されています。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+LIMIT 5
+```
+
+## DuckDBのSQL: 複数列の選択
+
+`dplyr`だと`tidyselect`で↓のように書ける\
+「列名のパターンで複数列を選択する」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::select(matches("s$")) |>
+  head(5)
+```
+
+## DuckDBのSQL: 複数列の選択
+
+DuckDBは`COLUMNS`を使ってこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT COLUMNS('s$')
+LIMIT 5
+```
+
+```
+┌────────┬─────────┬───┬──────────────────────┬──────────────────────┐
+│  mass  │ species │ … │       vehicles       │      starships       │
+│ double │ varchar │   │       varchar        │       varchar        │
+├────────┼─────────┼───┼──────────────────────┼──────────────────────┤
+│   77.0 │ Human   │ … │ Snowspeeder, Imper…  │ X-wing, Imperial s…  │
+│   75.0 │ Droid   │ … │                      │                      │
+│   32.0 │ Droid   │ … │                      │                      │
+│  136.0 │ Human   │ … │                      │ TIE Advanced x1      │
+│   49.0 │ Human   │ … │ Imperial Speeder B…  │                      │
+├────────┴─────────┴───┴──────────────────────┴──────────────────────┤
+│ 5 rows                                         5 columns (4 shown) │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+## DuckDBのSQL: 列の置換
+
+`dplyr`だと↓のように書ける\
+「特定の列を置換する」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::mutate(height = height * 1000) |>
+  head(5)
+```
+
+## DuckDBのSQL: 列の置換
+
+DuckDBでは`REPLACE`を使ってこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT * REPLACE (height * 1000 AS height)
+LIMIT 5
+```
+
+```
+┌────────────────┬────────┬────────┬───┬──────────────────────┬──────────────────────┐
+│      name      │ height │  mass  │ … │       vehicles       │      starships       │
+│    varchar     │ int64  │ double │   │       varchar        │       varchar        │
+├────────────────┼────────┼────────┼───┼──────────────────────┼──────────────────────┤
+│ Luke Skywalker │ 172000 │   77.0 │ … │ Snowspeeder, Imper…  │ X-wing, Imperial s…  │
+│ C-3PO          │ 167000 │   75.0 │ … │                      │                      │
+│ R2-D2          │  96000 │   32.0 │ … │                      │                      │
+│ Darth Vader    │ 202000 │  136.0 │ … │                      │ TIE Advanced x1      │
+│ Leia Organa    │ 150000 │   49.0 │ … │ Imperial Speeder B…  │                      │
+├────────────────┴────────┴────────┴───┴──────────────────────┴──────────────────────┤
+│ 5 rows                                                        14 columns (5 shown) │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## DuckDBのSQL: `DISTINCT ON`
+
+`dplyr`だと↓のように書ける\
+「グループ毎に最大の値を持つ行だけを残す」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::select(sex, name, mass) |>
+  dplyr::slice_max(mass, n = 1, by = sex)
+```
+
+## DuckDBのSQL: `DISTINCT ON`
+
+DuckDBは`DISTINCT ON`でこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT DISTINCT ON (sex)
+  sex, name, mass
+ORDER BY mass DESC
+```
+
+```
+┌────────────────┬───────────────────────┬────────┐
+│      sex       │         name          │  mass  │
+│    varchar     │        varchar        │ double │
+├────────────────┼───────────────────────┼────────┤
+│ hermaphroditic │ Jabba Desilijic Tiure │ 1358.0 │
+│ male           │ Grievous              │  159.0 │
+│ none           │ IG-88                 │  140.0 │
+│ female         │ Beru Whitesun lars    │   75.0 │
+│                │ Sly Moore             │   48.0 │
+└────────────────┴───────────────────────┴────────┘
+```
+
+## DuckDBのSQL: `QUALIFY`句
+
+`dplyr`だと↓のように書ける\
+「グループ毎に上位n行を残す」という処理
+
+```r
+dplyr::starwars |>
+  dplyr::select(sex, name, mass) |>
+  dplyr::slice_max(mass, n = 2, by = sex, with_ties = FALSE)
+```
+
+## DuckDBのSQL: `QUALIFY`句
+
+DuckDBは`QUALIFY`句でこう書けます。
+
+```sql
+FROM read_csv_auto('starwars.csv', header=true, nullstr='NA')
+SELECT
+  sex, name, mass
+QUALIFY
+  row_number() over (partition by sex order by mass desc) <= 2
+```
+
+```
+┌────────────────┬───────────────────────┬────────┐
+│      sex       │         name          │  mass  │
+│    varchar     │        varchar        │ double │
+├────────────────┼───────────────────────┼────────┤
+│ female         │ Beru Whitesun lars    │   75.0 │
+│ female         │ Shaak Ti              │   57.0 │
+│                │ Sly Moore             │   48.0 │
+│                │ Ric Olié              │        │
+│ hermaphroditic │ Jabba Desilijic Tiure │ 1358.0 │
+│ male           │ Grievous              │  159.0 │
+│ male           │ Darth Vader           │  136.0 │
+│ none           │ IG-88                 │  140.0 │
+│ none           │ C-3PO                 │   75.0 │
+└────────────────┴───────────────────────┴────────┘
+```
+
+# DuckDBの速度
+
+`duckdb` Rパッケージの速度を測ってみましょう。
+
+## テストデータ
+
+DuckDBのリポジトリに置かれているいつものParquet[^parquet]をダウンロードします。
+
+[^parquet]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://arrow.apache.org/blog/2021/12/03/arrow-duckdb/)
+
+```r
+curl::curl_download(
+  "https://github.com/duckdb/duckdb-data/releases/download/v1.0/lineitemsf1.snappy.parquet",
+  "lineitemsf1.snappy.parquet"
+)
+```
+
+サクッと時間を計りたいので`tictoc`パッケージをロードします。
+
+```{r}
+#| code-fold: false
+library(tictoc)
+```
+
+DuckDBとSQLiteのインメモリデータベーを作成しておきます。
+
+```{r}
+#| cache: false
+#| code-fold: false
+con <- DBI::dbConnect(duckdb::duckdb())
+con_sqlite <- DBI::dbConnect(RSQLite::SQLite())
+```
+
+## 参考：dplyr
+
+事前にParquetからデータを読み込んでおきます。（`duckdb`使用）
+
+```{r}
+#| code-fold: true
+tic()
+
+df_lineitemsf1 <- duckdb:::sql("FROM lineitemsf1.snappy.parquet") |>
+  dplyr::as_tibble()
+
+toc()
+```
+
+```{r}
+tic()
+
+df_lineitemsf1 |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE))
+
+toc()
+```
+
+## 参考：data.table (dtplyr)
+
+```{r}
+tic()
+
+df_lineitemsf1 |>
+  dtplyr::lazy_dt() |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## 参考：Acero (arrow)
+
+Parquetデータセットに対して直接クエリを実行できます。
+
+```{r}
+tic()
+
+arrow::open_dataset("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## 参考：Polars (r-polars)
+
+Parquetデータセットに対して直接クエリを実行できます。（Hive風パーティションは未対応）
+
+```{r}
+tic()
+
+polars::scan_parquet("lineitemsf1.snappy.parquet")$filter(
+    polars::pl$col("l_shipdate") >= "1994-01-01" & polars::pl$col("l_shipdate") < "1995-01-01" &
+    polars::pl$col("l_discount") >= 0.05 & polars::pl$col("l_discount") < 0.07 &
+    polars::pl$col("l_quantity") < 24
+  )$select(
+    (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()$alias("revenue")
+  ) |>
+  as.data.frame()
+
+toc()
+```
+
+## 参考：SQLite
+
+データをインメモリテーブルに書き込む必要があります。
+
+```{r}
+#| code-fold: true
+tic()
+
+DBI::dbWriteTable(con_sqlite, "lineitemsf1", df_lineitemsf1)
+
+toc()
+```
+
+```{r}
+tic()
+
+DBI::dbGetQuery(con_sqlite, "
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM lineitemsf1
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+")
+
+toc()
+```
+
+## 参考：SQLite (dbplyr)
+
+```{r}
+tic()
+
+dplyr::tbl(con_sqlite, "lineitemsf1") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## DuckDB; CSV、Parquetへの直接クエリ
+
+```{r}
+tic()
+
+duckdb:::sql("
+FROM lineitemsf1.snappy.parquet
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+", con
+)
+
+toc()
+```
+
+## DuckDB; Data Frameへのクエリ
+
+データフレームをDB内にコピーする必要はありません。
+
+```{r}
+tic()
+
+# 仮想テーブルとしてR DataFrameをDBに登録
+duckdb::duckdb_register(con, "lineitemsf1", df_lineitemsf1, overwrite = TRUE)
+
+duckdb:::sql("
+FROM lineitemsf1
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+", con
+)
+
+toc()
+```
+
+## DuckDB; CSV、Parquetへの直接クエリ (dbplyr)
+
+```{r}
+tic()
+
+dplyr::tbl(con, "lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(
+    revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)
+  ) |>
+  dplyr::collect()
+
+toc()
+```
+
+## DuckDB; Data Frameへのクエリ (dbplyr)
+
+```{r}
+tic()
+
+# 仮想テーブルとしてR DataFrameをDBに登録
+duckdb::duckdb_register(con, "lineitemsf1", df_lineitemsf1, overwrite = TRUE)
+
+dplyr::tbl(con, "lineitemsf1") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## 参考：duckplyr (1/2)
+
+[duckdblabs組織下で活発に開発されている謎のRパッケージ](https://github.com/duckdblabs/duckplyr)。
+
+`dbplyr`が`dplyr`をSQLに翻訳するのに対し、`duckplyr`はDuckDBのリレーショナルAPI（？）に翻訳しクエリを実行する。
+
+```{r}
+#| label: duckplyr
+#| eval: false
+tic()
+
+df_lineitemsf1 |>
+  duckplyr::as_duckplyr_df() |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount)) # 直接DuckDBの関数に変換されるため、na.rm引数を使用するとエラーになる
+
+toc()
+```
+
+## 参考：duckplyr (2/2)
+
+```{.r}
+#| label: duckplyr
+#| eval: true
+#| echo: false
+```
+
+# まとめ
+
+::: {.incremental}
+
+- DuckDBは手軽 → すぐに使い始めましょう！
+- DuckDBは高速 → ちょっと速度測ってみましょう！
+
+:::
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
