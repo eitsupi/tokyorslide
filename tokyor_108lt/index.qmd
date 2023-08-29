@@ -1,0 +1,92 @@
+---
+title: |
+    Codespacesで\
+    良い感じに\
+    RStudio Serverを起動するやつ
+subtitle: "2023-09-02 第108回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    self-contained: true
+    reference-location: document
+    code-fold: false
+engine: markdown
+lang: ja
+---
+
+## デモ用リポジトリ
+
+<https://github.com/eitsupi/devcontainer-try-r>
+
+バッジを押し、Codespaceを起動してしばらく放置……
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 最近転職しました
+  - 製造業大手→製造業？スタートアップ
+- Excelが嫌になりRを触り初めて4年
+- Dev Containerを布教して回っている（？）
+  - [Rocker Project](https://github.com/rocker-org/devcontainer-features)
+  - [Mamba](https://github.com/mamba-org/devcontainer-features) ← なぜかGitHub組織のメンバーに
+  - [JuliaLang](https://github.com/JuliaLang/devcontainer-features) ← なぜかGitHub組織のメンバーに
+
+:::
+
+::::
+
+## GitHub Codespaces
+
+- Dev Container CLIでビルドされたDockerコンテナを\
+  GitHubの仮想マシン上で動かすサービス
+  - ブラウザでGitHubにログインするだけで動作
+- コンテナは`devcontainer.json`で定義（Dev Container）、\
+  他のサポーツールを使えばローカルでも動かせる
+
+## RStudio on Codespaces 先行事例
+
+- <https://github.com/revodavid/devcontainers-rstudio>
+  - [rstudio::conf(2022)での発表](https://www.rstudio.com/conference/2022/talks/zero-setup-r-workshops-github/)
+  - `rocker/rstudio`ベース
+  - 要`sudo`
+  - デフォルトフォルダ問題 ([revodavid/devcontainers-rstudio#1](https://github.com/revodavid/devcontainers-rstudio/issues/1))
+
+## [`ghcr.io/rocker-org/devcontainer-features/rstudio-server`](https://github.com/rocker-org/devcontainer-features/tree/main/src/rstudio-server)
+
+- 任意のUbuntuイメージに対応
+- シングルユーザーモード（`sudo`不要）
+- パスワード無効化
+- デフォルトフォルダ問題を解決
+
+# (デモに戻る)
+
+## まとめ
+
+::: {.incremental}
+
+- Codespaces上でRStudio Serverも簡単に動く
+- フィードバックは[こちら](https://github.com/rocker-org/devcontainer-features/issues)まで
+
+:::
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
