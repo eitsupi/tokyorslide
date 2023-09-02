@@ -59,7 +59,7 @@ lang: ja
   GitHubの仮想マシン上で動かすサービス
   - ブラウザでGitHubにログインするだけで動作
 - コンテナは`devcontainer.json`で定義（Dev Container）、\
-  他のサポーツールを使えばローカルでも動かせる
+  他のサポートツールを使えばローカルDockerでも動かせる
 
 ## RStudio on Codespaces 先行事例
 
