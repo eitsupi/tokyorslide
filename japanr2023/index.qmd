@@ -1,0 +1,110 @@
+---
+title: |
+    pola-rs/r-polarsができて\
+    一年経ちました
+subtitle: "2023-12-02 Japan.R 2023<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    # self-contained: true
+    reference-location: document
+    code-fold: false
+engine: markdown
+lang: ja
+---
+
+:::{.content-hidden}
+
+TODO: CRAN上のパッケージサイズランキング
+
+:::
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 最近転職しました
+  - 製造業大手 → バイオベンチャー
+- Rを触り初めて4年半\
+  （Excelに嫌気/R Markdownを使いたかった）
+- Rustを触り初めて1年強
+- Dev Containerが好きで、布教して回っている
+
+:::
+
+::::
+
+# 前回までのふりかえり
+
+---
+
+![](tokyor103.jpg){fig-align="center" width="600"}
+
+今年初めのTokyo.Rで、polarsパッケージを紹介しました（[資料](https://eitsupi.github.io/tokyorslide/tokyor_103lt)）
+
+---
+
+またこれまでに主に`dplyr`との比較という観点で、
+
+. . .
+
+`arrow`を紹介し（[資料](https://eitsupi.github.io/tokyorslide/tokyor_97)）、
+
+. . .
+
+`data.table`を紹介し（[資料](https://eitsupi.github.io/tokyorslide/tokyor_100)）、
+
+. . .
+
+`duckdb`も紹介しました（[資料](https://eitsupi.github.io/tokyorslide/tokyor_106)）。
+
+---
+
+今日は`dplyr`との比較（速度・構文）ではなく、\
+「この一年間で何があったか」を簡単にまとめます。
+
+今回の発表に関連した記事も併せてどうぞ。
+
+# `polars`パッケージでできること
+
+## ここがすごい！①<br/>Rust不要の高速インストール
+
+オプトインすることでコンパイル済みライブラリをダウンロードし\
+Rustソースのビルドをスキップしてインストールできます。
+
+```r
+Sys.setenv(NOT_CRAN = "true")
+install.packages("polars", repos = "https://rpolars.r-universe.dev")
+```
+
+また、そもそもR-universe上では上記のメカニズムで\
+バイナリRパッケージがビルド済なので、\
+対応プラットフォームではバイナリインストールも可能です。
+
+
+## ここがすごい！②<br/>Webサイトが特殊
+
+## ここがすごい！③<br/>Base R API
+
+## ここがすごい！④<br/>tidypolars
+
+# よくある質問
+
+# 今後の展望
