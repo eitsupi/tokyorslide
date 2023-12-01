@@ -12,7 +12,7 @@ format:
     chalkboard: false
     preview-links: auto
     footer: "#Tokyo.R"
-    # self-contained: true
+    self-contained: true
     reference-location: document
     code-fold: false
 engine: knitr
@@ -156,7 +156,7 @@ lf$
 
 . . .
 
-きみも`polars`に貢献してCRAN最大のパッケージを実現させよう！
+**きみも`polars`に貢献してCRAN最大のパッケージを実現させよう！**
 
 ## 特殊なWebサイト
 
