@@ -1,0 +1,5 @@
+*.parquet
+*.csv
+
+*_cache/
+*_files/

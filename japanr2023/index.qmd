@@ -1,0 +1,219 @@
+---
+title: |
+    pola-rs/r-polarsができて\
+    一年経ちました
+subtitle: "2023-12-02 Japan.R 2023<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    self-contained: true
+    reference-location: document
+    code-fold: false
+engine: knitr
+lang: ja
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 最近転職しました
+  - 製造業大手 → バイオベンチャー
+- Rを触り初めて4年半\
+  （Excelに嫌気/R Markdownを使いたかった）
+- Rustを触り初めて1年強
+- Dev Containerが好きで、布教して回っている
+
+:::
+
+::::
+
+# 前回までのふりかえり
+
+---
+
+![](tokyor103.jpg){fig-align="center" width="600"}
+
+今年初めのTokyo.Rで、polarsパッケージを紹介しました（[資料](https://eitsupi.github.io/tokyorslide/tokyor_103lt)）
+
+---
+
+またこれまでに主に`dplyr`との比較という観点で、
+
+. . .
+
+`arrow`を紹介し（[資料](https://eitsupi.github.io/tokyorslide/tokyor_97)）、
+
+. . .
+
+`data.table`を紹介し（[資料](https://eitsupi.github.io/tokyorslide/tokyor_100)）、
+
+. . .
+
+`duckdb`も紹介しました（[資料](https://eitsupi.github.io/tokyorslide/tokyor_106)）。
+
+---
+
+今日は`dplyr`との比較（速度・構文）ではなく、\
+「この一年間で何があったか」を簡単にまとめます。
+
+~~ベンチマークは面倒なので~~
+
+. . .
+
+今回の発表に関連した記事も併せてどうぞ。\
+<https://zenn.dev/eitsupi/articles/r-polars-2023>
+
+# 2023年の進捗
+
+## Rust不要の高速インストール
+
+`NOT_CRAN="true"`とオプトインすることで\
+Rustソースのビルドをスキップしてインストールできます。
+
+```r
+Sys.setenv(NOT_CRAN = "true")
+install.packages("polars", repos = "https://rpolars.r-universe.dev")
+```
+
+. . .
+
+また、R-universe上では上記のメカニズムで\
+バイナリRパッケージがビルド済なので、\
+対応プラットフォームではバイナリインストール可能です。
+
+## 余談：CRANリリースの可能性？ 1/3
+
+今年の7月、これまでグレーゾーンだった\
+CRAN上のRustソースコードの取り扱いについて明文化されました
+
+<https://cran.r-project.org/web/packages/using_rust.html>
+
+基本的にはこれに準拠すれば（準拠するために滅茶苦茶頑張れば）\
+CRANリリースは可能なはずです。
+
+ただし、CRAN上のRustバージョンはPolarsの要求バージョンより\
+常に数ヶ月～一年古いため、Polarsの開発方針変更がないかぎり\
+最新バージョンのリリースは不可能かもしれません。
+
+## 余談：CRANリリースの可能性？ 2/3
+
+ちなみに、依存するRustクレートを含めた`polars`の\
+ソースコードの容量は30MBを超えるそうです。
+
+通常、Rパッケージのソースコードは5MB未満になるため、\
+これはかなり大きいです。
+
+これはどのくらい大きいのか？\
+比較のため、CRAN上のパッケージを容量順に並べてみましょう。
+
+## 余談：CRANリリースの可能性？ 3/3
+
+```{r}
+#| echo: true
+#| cache: true
+#| code-fold: true
+options(repos = c(CRAN = "https://cran.r-project.org/"))
+
+packages_current <- tools:::CRAN_current_db() # data.frame
+
+lf <- packages_current |>
+  tibble::as_tibble(rownames = "package_name") |>
+  polars::as_polars_lf()
+
+lf$
+  sort("size", descending = TRUE)$
+  head(n = 3)$
+  select(
+    名前 = polars::pl$col("package_name")$str$replace("_.*$", ""),
+    `容量 (MB)` = polars::pl$col("size") %/% 10L^6
+  ) |>
+  knitr::kable()
+```
+
+なんと、30MBを超えるパッケージは現存しません。
+
+. . .
+
+**もしCRANリリースできたら、CRAN最大のパッケージになります。**
+
+. . .
+
+**きみも`polars`に貢献してCRAN最大のパッケージを実現させよう！**
+
+## 特殊なWebサイト
+
+Rパッケージの公式ドキュメントといえば`pkgdown`ですが、\
+`pkgdown`には左サイドバーがなく、表示可能な情報量は少ないです。
+
+. . .
+
+大量の独自オブジェクトと\
+それに紐付いた大量のメソッドのナビゲーションのため\
+`polars`は`altdoc`パッケージを介してMkDocs Materialで\
+ウェブサイトを構築しています。
+
+## Base R API
+
+`data.frame`を模擬した動作をするように、\
+Base Rの関数のいくつかのS3メソッドを実装しています。
+
+```{r}
+#| echo: true
+mtcars_pl <- polars::as_polars_df(mtcars)
+mtcars_pl[1:5, c("cyl", "am")]
+```
+
+## tidypolars
+
+`polars`メンテナの一人でもある[@etiennebacher](https://github.com/etiennebacher)さんが\
+[`tidypolars`](https://tidypolars.etiennebacher.com/)というパッケージを開発されており、\
+`dplyr`の関数をpolarsデータフレーム（とLazyFrame）に使えます。
+
+```{r}
+#| echo: true
+library(dplyr, warn.conflicts = FALSE)
+library(tidypolars, warn.conflicts = FALSE)
+
+polars::as_polars_lf(mtcars) |>
+  summarise(across(everything(), .fns = mean), .by = "cyl") |>
+  arrange(cyl) |>
+  collect()
+```
+
+# まとめ
+
+::: {.incremental}
+
+- Polarsの勉強になった
+- Rustのビルドの勉強になった
+- CRANポリシーの勉強になった
+- ドキュメントシステムの勉強になった
+- S3の勉強になった
+- S4の勉強になった（[`polarssql`](https://github.com/rpolars/r-polarssql)）
+
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
+
