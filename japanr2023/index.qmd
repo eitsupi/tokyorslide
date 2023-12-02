@@ -11,7 +11,7 @@ format:
     slide-number: true
     chalkboard: false
     preview-links: auto
-    footer: "#Tokyo.R"
+    footer: "#Japan.R 2023"
     self-contained: true
     reference-location: document
     code-fold: false
