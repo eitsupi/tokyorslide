@@ -12,3 +12,4 @@ title: "資料"
 - [第106回R勉強会@東京（#TokyoR）応用セッション すごいぞはやいぞDuckDB](./tokyor_106/index.html)
 - [第108回R勉強会@東京（#TokyoR）LT Codespacesで良い感じにRStudio Serverを起動するやつ](./tokyor_108lt/index.html)
 - [Japan.R 2023　ショートセッション　pola-rs/r-polarsができて一年経ちました](./japanr2023/index.html)
+- [第112回R勉強会@東京（#TokyoR）LT Rパッケージのドキュメントを読もう！](./tokyor_112lt/index.html)

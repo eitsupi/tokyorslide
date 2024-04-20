@@ -1,0 +1,166 @@
+---
+title: |
+    Rパッケージの\
+    ドキュメントを読もう！
+subtitle: "2024-04-20 第112回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    self-contained: true
+    reference-location: document
+    code-fold: false
+engine: markdown
+lang: ja
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 製造業大手→バイオベンチャー勤務
+- Excelが嫌になりRを触り初めて5年
+- 最近は[Polars界隈](https://github.com/pola-rs)によく出没
+
+:::
+
+::::
+
+## Rパッケージのヘルプは充実！
+
+- CRANにパッケージを提出する際に自動+人力で確認される
+  - 不足していると受理されない
+- ヘルプ内の例は基本的にCRAN上で定期的にチェックされているので、動くはず
+- CRAN上でPDFマニュアルも提供されている
+  - [今夏HTMLへの移行が計画されているらしい](https://fosstodon.org/@Lluis_Revilla/112274253197303526)
+
+# R本体のヘルプ
+
+## [Getting Help with R](https://www.r-project.org/help.html)
+
+> Before asking others for help, it’s generally a good idea for you to try to help yourself.
+
+R公式サイトに["Getting Help with R"](https://www.r-project.org/help.html)というページがあり、後述の`help()`関数の使い方やウェブ上の検索エンジンの紹介があります。
+
+## `help`関数など
+
+（CRANからインストールした）Rパッケージには\
+ドキュメントが付属していて、`help()`関数や`?`演算子で\
+インストール済のドキュメントを呼び出せます。
+
+```{.r filename="Rコンソール"}
+help("?") # help関数で?のドキュメントを呼び出す
+?help     # ?演算子でhelp関数のドキュメントを呼び出す
+```
+
+`help.search()`関数や`??`演算子で\
+ドキュメント全体を検索することもできます。
+
+```{.r filename="Rコンソール"}
+??"help search" # ??演算子を使って「help search」と検索
+```
+
+## インターネットサーチエンジン
+
+`RSiteSearch()`でも呼び出される<https://search.r-project.org/>というページがあり、関数名などで検索するとCRAN上のパッケージのドキュメントが引っかかります。
+
+# サードパーティのシステム
+
+## [pkgdown](https://pkgdown.r-lib.org/) (1/2)
+
+`pkgdown`は一番広く使われているRパッケージ用のウェブサイトを作成するためのパッケージです。
+
+![](dplyr-cran.png){fig-align="center"}
+
+↑のように各Rパッケージに設定できるURLの1つ目として`pkgdown`製ウェブサイトが設定されていることが多いです。
+
+## [pkgdown](https://pkgdown.r-lib.org/) (2/2)
+
+`pkgdown`で作られた関数のドキュメントでは例の実行結果も同時に表示されていて分かりやすいです。
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+### [CRAN](https://search.r-project.org/CRAN/refmans/dplyr/html/mutate.html)
+
+![](dplyr-mutate-cran.png){fig-align="center"}
+
+:::
+
+::: {.column width="50%"}
+
+### [pkgdown](https://dplyr.tidyverse.org/reference/mutate.html)
+
+![](dplyr-mutate-pkgdown.png){fig-align="center"}
+
+:::
+
+::::
+
+また、`pkgdown`上のRコードブロック内では、それぞれの関数がリンクになる（上の画像の`select`）ので、例の中の知らない関数についてもすぐに調べられます。
+
+## [Rdrr.io](https://rdrr.io/)
+
+CRAN上やBioconductor上のパッケージのドキュメントを独自に保持しているサイトです（あんまり詳しくないです……）。
+
+`pkgdown`製のウェブサイトを持たないパッケージの関数に対して、`pkgdown`（正確には[`downlit`](https://downlit.r-lib.org/)）が自動リンク先として使用するウェブサイトで、関数名で検索したり関数のソースコードを見たりできます。
+
+## [RDocumentation](https://www.rdocumentation.org/)
+
+DataCamp社の運営している、Rdrr.ioと似たサイトです。Google等で関数を検索すると上位に出てくることが多いです。
+
+Rdrr.ioと比較して
+
+- UIがモダンでわかりやすい
+- 最新のパッケージのドキュメントを保持していない
+  - 例えば`base`パッケージのようなR本体に付属しているパッケージのバージョンは3.6.2（2019年12月リリース）
+
+簡単に調べるには良いのですが最新の情報については別の場所で確認する必要があると感じています。
+
+## <https://github.com/cran>
+
+CRAN上のパッケージをすべて（非公式に）ミラーしているGitHub組織です。
+
+ドキュメントというよりはソースコードですが、GitHubアカウントにログインしていればGitHubの高性能な検索機能でCRAN上のRパッケージを横断検索できるので便利です。
+
+## [R-universe](https://r-universe.dev)
+
+CRAN上のすべてのパッケージを含む大量のパッケージのドキュメントを独自にレンダリングして保持しています。
+
+ドキュメントはシンプル目ですがCRANよりちょっと豪華な表示。
+
+エクスポートされている関数名で検索することもできたり、総合力が高いです（？）。
+
+# まとめ
+
+## 私のオススメ
+
+::: {.incremental}
+
+- 横断：[GitHub](https://github.com/cran)、[R-universe](https://r-universe.dev)
+- 詳細：各パッケージのpkgdownサイト（あれば）
+
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
