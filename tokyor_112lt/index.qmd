@@ -82,7 +82,7 @@ help("?") # help関数で?のドキュメントを呼び出す
 
 # サードパーティのシステム
 
-## [pkgdown](https://pkgdown.r-lib.org/) (1/2)
+## [pkgdown](https://pkgdown.r-lib.org/) (1/3)
 
 `pkgdown`は一番広く使われているRパッケージ用のウェブサイトを作成するためのパッケージです。
 
@@ -90,7 +90,7 @@ help("?") # help関数で?のドキュメントを呼び出す
 
 ↑のように各Rパッケージに設定できるURLの1つ目として`pkgdown`製ウェブサイトが設定されていることが多いです。
 
-## [pkgdown](https://pkgdown.r-lib.org/) (2/2)
+## [pkgdown](https://pkgdown.r-lib.org/) (2/3)
 
 `pkgdown`で作られた関数のドキュメントでは例の実行結果も同時に表示されていて分かりやすいです。
 
@@ -114,7 +114,11 @@ help("?") # help関数で?のドキュメントを呼び出す
 
 ::::
 
-また、`pkgdown`上のRコードブロック内では、それぞれの関数がリンクになる（上の画像の`select`）ので、例の中の知らない関数についてもすぐに調べられます。
+## [pkgdown](https://pkgdown.r-lib.org/) (3/3)
+
+また、`pkgdown`上のRコードブロック内では、それぞれの関数がリンクになる（下の画像の`select`）ので、例の中の知らない関数についてもすぐに調べられます。
+
+![](dplyr-mutate-pkgdown-note.png){fig-align="center"}
 
 ## [Rdrr.io](https://rdrr.io/)
 
