@@ -1,0 +1,38 @@
+---
+title: >
+  <font color="yellow">duck</font>plyr<br/>
+  覚醒
+subtitle: "2023-01-21 第103回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    embed-resources: true
+    reference-location: document
+lang: ja
+filters:
+  - webr
+webr:
+  cell-options:
+    editor-font-scale: 0.5
+  packages:
+    - duckplyr
+---
+
+
+```{webr-r}
+library(duckplyr, warn.conflicts = FALSE)
+
+mtcars |>
+#   as_duckplyr_df() |> # <- この行のコメントアウトを解除
+  summarise(
+    across(everything(), \(x) mean(x, na.rm = TRUE)),
+    .by = "cyl"
+  ) |>
+  arrange(cyl)
+```
