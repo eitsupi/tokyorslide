@@ -86,6 +86,56 @@ DuckDBの紹介をしたりしてきました（2023年）
 [^tidy-wrappers]: [The Truth About Tidy Wrappers](https://outsiderdata.netlify.app/posts/2024-04-10-the-truth-about-tidy-wrappers/benchmark_wrappers)
 [^duckdb-100]: [Announcing DuckDB 1.0.0](https://duckdb.org/2024/06/03/announcing-duckdb-100.html)
 
+# DuckDB周辺のおさらい
+
+## Apache Parquet (1/2)
+
+- 2013年～[^parquet]
+- Apache Hadoop用に作られた**列指向**の**ファイルフォーマット**
+  - 列方向に圧縮されるため大量のレコードを圧縮しやすい
+  - 列単位でベクトル化した計算を行う分析処理と相性が良い
+- 速く型を正確に読み込めるため、大きなデータフレームの保存に向く
+  - 「CSVをやめて人間を続けよう」[^csv-or-parquet]
+
+[^parquet]: [Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
+[^csv-or-parquet]: [そろそろRユーザーもApache ArrowでParquetを使ってみませんか？](https://notchained.hatenablog.com/entry/2019/12/17/213356)
+
+## Apache Parquet (2/2)
+
+- Parquetを読み書きできる主要なRパッケージ
+  - Spark経由の`sparkR`と`sparklyr`
+  - `arrow`： 多機能だがビルド大変
+  - `duckdb`： 多機能、factor型への特別対応なし
+  - `nanoparquet` (New!)： ビルド簡単、最低限の機能
+
+. . .
+
+`duckdb`の多機能化と`nanoparquet`の登場で、\
+Parquet読み書きのためだけに`arrow`を使用しなくても良い時代に
+
+## Apache Arrow
+
+- 2016年～[^arrow]
+- _A high-performance cross-system data layer for columnar in-memory analytics_
+- 言語に寄らない**列指向**の**インメモリフォーマット**の標準を目指しているプロジェクト
+  - Arrowを介することで、ある列指向データから別の列指向データへの変換を個別に実装する必要はなくなる
+
+[^arrow]: [The Apache® Software Foundation Announces Apache Arrow™ as a Top-Level Project](https://blogs.apache.org/foundation/entry/the_apache_software_foundation_announces87)
+
+## クエリエンジン競争（※個人的見解）
+
+Apache Arrow周辺の主要なクエリエンジン
+
+- Acero ← 最速競争からドロップアウト
+- DataFusion ← Rust向け（他言語バインディング下火）
+- DuckDB ← 多くの言語から利用可能
+- Polars ← Python向け（Rustから使うと……）
+
+. . .
+
+DuckDBは最速クラスな上に多くの言語から利用可能なので、RustとPython以外の言語から使う場合は最有力\
+（この中で一番SQLが充実しているのでSQL重視ならRustとPythonでもDuckDBが良い）
+
 ## duckplyr WASM
 
 ```{webr-r}
