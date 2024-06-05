@@ -2,7 +2,7 @@
 title: >
   <font color="yellow">duck</font>plyr<br/>
   覚醒
-subtitle: "2023-01-21 第103回R勉強会@東京<br/>@eitsupi"
+subtitle: "2024-06-08 第103回R勉強会@東京<br/>@eitsupi"
 format:
   revealjs:
     theme: [night, custom.scss]
@@ -24,6 +24,69 @@ webr:
     - duckplyr
 ---
 
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 大手製造業 → バイオベンチャー
+- Excelが嫌になりRを触り初めて5年
+  - [Rockerプロジェクト (Shell, R, Docker)](https://rocker-project.org/)
+  - [Polars Rパッケージ (R, Rust)](https://pola-rs.github.io/r-polars/)
+  - [PRQL (Rust, R, Python)](https://prql-lang.org/)
+- 最近は数年ぶりに`ggplot2`をよく使ってます
+- 近況：引き継いだSciPyで方程式解くスクリプトを\
+  AIに食わせてJuliaに直したら10倍速になって感動
+
+:::
+
+::::
+
+# 前回までのあらすじ
+
+---
+
+[![](dtplyr-bench.png){fig-align="center" width=900}](https://eitsupi.github.io/tokyorslide/tokyor_100/)
+
+dplyrバックエンドの速度比較をしたり（2022年）
+
+---
+
+[![](sugohaya-duckdb.png){fig-align="center" width=900}](https://eitsupi.github.io/tokyorslide/tokyor_106/)
+
+DuckDBの紹介をしたりしてきました（2023年）
+
+# そして2024年……
+
+---
+
+::: {.incremental}
+
+- 4月2日：DuckDB BLOG上でduckplyr発表[^duckplyr]
+- 4月10日：duckplyrが速すぎるという検証結果のブログが話題に[^tidy-wrappers]
+- 6月3日：DuckDB 1.0.0リリース[^duckdb-100]（※Rパッケージはまだ）
+
+:::
+
+. . .
+
+**今、DuckDBがアツい！！！**
+
+[^duckplyr]: [duckplyr: A dplyr backend for DuckDB](https://duckdb.org/2024/04/02/duckplyr)
+[^tidy-wrappers]: [The Truth About Tidy Wrappers](https://outsiderdata.netlify.app/posts/2024-04-10-the-truth-about-tidy-wrappers/benchmark_wrappers)
+[^duckdb-100]: [Announcing DuckDB 1.0.0](https://duckdb.org/2024/06/03/announcing-duckdb-100.html)
+
+## duckplyr WASM
 
 ```{webr-r}
 library(duckplyr, warn.conflicts = FALSE)
