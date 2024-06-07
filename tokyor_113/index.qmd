@@ -16,10 +16,12 @@ format:
     reference-location: document
 execute:
   cache: true
+  echo: true
 lang: ja
 filters:
   - webr
 webr:
+  show-startup-message: false
   cell-options:
     editor-font-scale: 0.5
   packages:
@@ -140,18 +142,33 @@ Apache Arrow周辺の主要なクエリエンジン
 
 . . .
 
-DuckDBは最速クラスな上に多くの言語から利用可能なので、RustとPython以外の言語から使う場合は最有力\
-（この中でDuckDBが一番SQL充実しているので、SQL重視ならRustとPythonでもDuckDBが良い）
+DuckDBは最速クラスな上に多くの言語から利用可能\
+（それに加えてSQLも最も充実している）
 
 [^acero]: [[DISCUSS] Acero roadmap / philosophy](https://lists.apache.org/thread/d28dby4gzt1v73sszx1564dtp4hx4yf2)
 
+## duckplyrとは
+
+::: {.incremental}
+
+- `dplyr`の高速バックエンドとして作られたRパッケージ
+- `dplyr`のクエリをDuckDBのリレーショナルAPIに変換する
+- Rのデータフレームへのクエリに特化（通常の`dplyr`と同じ）
+  - 本来DuckDBの得意とするParquet等へのクエリへの対応は途中（後述）
+    - 現時点ではデータフレーム以外に対しては`dbplyr`使う方が良い？
+- 遅延評価を行う他のバックエンドと異なり`dplyr::collect()`を呼ばなくても即座にデータフレームを返す（通常の`dplyr`と同じ）
+
+:::
+
 ## duckplyr WASM
 
+DuckDBなので当然webR上でも動きます
+
 ```{webr-r}
-library(duckplyr, warn.conflicts = FALSE)
+library(dplyr, warn.conflicts = FALSE)
+# library(duckplyr, warn.conflicts = FALSE) # <- この行のコメントアウトを解除
 
 mtcars |>
-  # as_duckplyr_df() |> # <- この行のコメントアウトを解除
   summarise(
     across(everything(), \(x) mean(x, na.rm = TRUE)),
     .by = "cyl"
@@ -159,10 +176,11 @@ mtcars |>
   arrange(cyl)
 ```
 
-## ベンチマーク data.frameへのクエリ 1/2
+# ベンチマーク
+
+## data.frameへのクエリ 1/2
 
 ```{r}
-#| echo: true
 #| code-fold: true
 #| code-summary: ベンチマーク用関数
 .gen_data <- \(n_group, n_row, n_col_value, .seed = 1) {
@@ -237,7 +255,6 @@ mtcars |>
 ```
 
 ```{r}
-#| echo: true
 res_sum <- bench::press(
   n_row = c(1e5, 1e6, 1e7),
   n_col_value = c(1),
@@ -257,9 +274,10 @@ res_sum <- bench::press(
 )
 ```
 
-## ベンチマーク data.frameへのクエリ 2/2
+## data.frameへのクエリ 2/2
 
 ```{r}
+#| echo: false
 #| fig-align: center
 res_sum |>
   ggplot2::autoplot("violin")
@@ -267,3 +285,184 @@ res_sum |>
 
 - DuckDBはdata.frameをDB内にコピーしないため速い
 - DuckDBの計算速度が速い
+
+## Parquetへのクエリ 1/9
+DuckDBのリポジトリに置かれているいつものParquet[^parquet]を使用します。
+
+[^parquet]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://arrow.apache.org/blog/2021/12/03/arrow-duckdb/)
+
+```r
+curl::curl_download(
+  "https://github.com/duckdb/duckdb-data/releases/download/v1.0/lineitemsf1.snappy.parquet",
+  "lineitemsf1.snappy.parquet"
+)
+```
+
+サクッと時間を計りたいので`tictoc`パッケージをロードします。
+
+```{r}
+library(tictoc)
+```
+
+## Parquetへのクエリ 2/9
+`nanoparquet`で読み込み`dplyr`でクエリを実行する場合
+
+```{r}
+tic()
+
+nanoparquet::read_parquet("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE))
+
+toc()
+```
+
+## Parquetへのクエリ 3/9
+Acero (`arrow`パッケージ) の場合
+
+```{r}
+tic()
+
+arrow::open_dataset("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## Parquetへのクエリ 4/9
+Polarsの場合
+
+```{r}
+tic()
+
+polars::pl$scan_parquet("lineitemsf1.snappy.parquet")$filter(
+    polars::pl$col("l_shipdate") >= "1994-01-01",
+    polars::pl$col("l_shipdate") < "1995-01-01",
+    polars::pl$col("l_discount") >= 0.05, polars::pl$col("l_discount") < 0.07,
+    polars::pl$col("l_quantity") < 24
+  )$select(
+    revenue = (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()
+  ) |>
+  as.data.frame()
+
+toc()
+```
+
+## Parquetへのクエリ 5/9
+GlareDB（DataFusionに基づいた分析用RDBMS）の場合
+
+```{r}
+tic()
+
+glaredb::glaredb_sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+  as.data.frame()
+
+toc()
+```
+
+## Parquetへのクエリ 6/9
+`duckplyr`の場合
+
+```{r}
+#| label: duckplyr
+#| eval: false
+tic()
+
+duckplyr::duckplyr_df_from_parquet("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE))
+
+toc()
+```
+
+## Parquetへのクエリ 7/9
+`duckplyr`の場合……は、どうやらプッシュダウンが上手く動作しておらず遅いようです[^duckplyr-pushdown]。今後に期待。
+
+[^duckplyr-pushdown]: <https://github.com/duckdblabs/duckplyr/issues/172>
+
+```{r}
+#| label: duckplyr
+#| eval: true
+#| echo: false
+```
+
+## Parquetへのクエリ 8/9
+`duckdb`の場合
+
+```{r}
+tic()
+
+duckdb:::sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+  as.data.frame()
+
+toc()
+```
+
+## Parquetへのクエリ 9/9
+`duckdb`の場合（dbplyr経由）
+
+```{r}
+tic()
+
+dplyr::tbl(DBI::dbConnect(duckdb::duckdb()), "read_parquet('lineitemsf1.snappy.parquet')") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## まとめ
+
+::: {.incremental}
+
+- どんどん速くなるDuckDB
+- `duckplyr`で手軽さUP
+
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
+
+## バージョン情報
+
+```{r}
+sessioninfo::session_info()
+```
