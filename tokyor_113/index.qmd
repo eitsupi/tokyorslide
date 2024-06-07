@@ -15,7 +15,7 @@ format:
     embed-resources: true
     reference-location: document
 execute:
-  cache: true
+  # cache: true
   echo: true
 lang: ja
 filters:
@@ -155,8 +155,8 @@ DuckDBは最速クラスな上に多くの言語から利用可能\
 - `dplyr`のクエリをDuckDBのリレーショナルAPIに変換する
 - Rのデータフレームへのクエリに特化（通常の`dplyr`と同じ）
   - 本来DuckDBの得意とするParquet等へのクエリへの対応は途中（後述）
-    - 現時点ではデータフレーム以外に対しては`dbplyr`使う方が良い？
-- 遅延評価を行う他のバックエンドと異なり`dplyr::collect()`を呼ばなくても即座にデータフレームを返す（通常の`dplyr`と同じ）
+    - 現時点ではデータフレーム以外には`dbplyr`使う方が良い
+- 遅延評価を行う他のバックエンドと異なり`dplyr::collect()`なしで即座にデータフレームを返す（通常の`dplyr`と同じ）
 
 :::
 
@@ -286,7 +286,8 @@ res_sum |>
 - DuckDBはdata.frameをDB内にコピーしないため速い
 - DuckDBの計算速度が速い
 
-## Parquetへのクエリ 1/9
+## Parquetへのクエリ 1/10
+
 DuckDBのリポジトリに置かれているいつものParquet[^parquet]を使用します。
 
 [^parquet]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://arrow.apache.org/blog/2021/12/03/arrow-duckdb/)
@@ -304,7 +305,8 @@ curl::curl_download(
 library(tictoc)
 ```
 
-## Parquetへのクエリ 2/9
+## Parquetへのクエリ 2/10
+
 `nanoparquet`で読み込み`dplyr`でクエリを実行する場合
 
 ```{r}
@@ -321,7 +323,8 @@ nanoparquet::read_parquet("lineitemsf1.snappy.parquet") |>
 toc()
 ```
 
-## Parquetへのクエリ 3/9
+## Parquetへのクエリ 3/10
+
 Acero (`arrow`パッケージ) の場合
 
 ```{r}
@@ -339,26 +342,28 @@ arrow::open_dataset("lineitemsf1.snappy.parquet") |>
 toc()
 ```
 
-## Parquetへのクエリ 4/9
+## Parquetへのクエリ 4/10
+
 Polarsの場合
 
 ```{r}
 tic()
 
 polars::pl$scan_parquet("lineitemsf1.snappy.parquet")$filter(
-    polars::pl$col("l_shipdate") >= "1994-01-01",
-    polars::pl$col("l_shipdate") < "1995-01-01",
-    polars::pl$col("l_discount") >= 0.05, polars::pl$col("l_discount") < 0.07,
-    polars::pl$col("l_quantity") < 24
-  )$select(
-    revenue = (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()
-  ) |>
+  polars::pl$col("l_shipdate") >= "1994-01-01",
+  polars::pl$col("l_shipdate") < "1995-01-01",
+  polars::pl$col("l_discount") >= 0.05, polars::pl$col("l_discount") < 0.07,
+  polars::pl$col("l_quantity") < 24
+)$select(
+  revenue = (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()
+) |>
   as.data.frame()
 
 toc()
 ```
 
-## Parquetへのクエリ 5/9
+## Parquetへのクエリ 5/10
+
 GlareDB（DataFusionに基づいた分析用RDBMS）の場合
 
 ```{r}
@@ -378,7 +383,8 @@ WHERE
 toc()
 ```
 
-## Parquetへのクエリ 6/9
+## Parquetへのクエリ 6/10
+
 `duckplyr`の場合
 
 ```{r}
@@ -397,7 +403,8 @@ duckplyr::duckplyr_df_from_parquet("lineitemsf1.snappy.parquet") |>
 toc()
 ```
 
-## Parquetへのクエリ 7/9
+## Parquetへのクエリ 7/10
+
 `duckplyr`の場合……は、どうやらプッシュダウンが上手く動作しておらず遅いようです[^duckplyr-pushdown]。今後に期待。
 
 [^duckplyr-pushdown]: <https://github.com/duckdblabs/duckplyr/issues/172>
@@ -408,7 +415,8 @@ toc()
 #| echo: false
 ```
 
-## Parquetへのクエリ 8/9
+## Parquetへのクエリ 8/10
+
 `duckdb`の場合
 
 ```{r}
@@ -428,7 +436,8 @@ WHERE
 toc()
 ```
 
-## Parquetへのクエリ 9/9
+## Parquetへのクエリ 9/10
+
 `duckdb`の場合（dbplyr経由）
 
 ```{r}
@@ -444,6 +453,62 @@ dplyr::tbl(DBI::dbConnect(duckdb::duckdb()), "read_parquet('lineitemsf1.snappy.p
   dplyr::collect()
 
 toc()
+```
+
+## Parquetへのクエリ 10/10
+
+
+```{r}
+#| code-fold: true
+#| code-summary: ベンチマーク
+bnch <- bench::mark(
+  check = FALSE,
+  min_iterations = 10,
+  acero = arrow::open_dataset("lineitemsf1.snappy.parquet") |>
+    dplyr::filter(
+      l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+      l_discount >= 0.05, l_discount < 0.07,
+      l_quantity < 24
+    ) |>
+    dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+    dplyr::collect(),
+  polars = polars::pl$scan_parquet("lineitemsf1.snappy.parquet")$filter(
+    polars::pl$col("l_shipdate") >= "1994-01-01",
+    polars::pl$col("l_shipdate") < "1995-01-01",
+    polars::pl$col("l_discount") >= 0.05, polars::pl$col("l_discount") < 0.07,
+    polars::pl$col("l_quantity") < 24
+  )$select(
+    revenue = (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()
+  ) |>
+    as.data.frame(),
+  glaredb = glaredb::glaredb_sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+    as.data.frame(),
+  duckdb = duckdb:::sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+    as.data.frame()
+)
+```
+
+```{r}
+#| echo: false
+#| fig-align: center
+bnch |>
+  ggplot2::autoplot("violin")
 ```
 
 ## まとめ
