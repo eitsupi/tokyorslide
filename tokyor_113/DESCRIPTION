@@ -5,5 +5,7 @@ Imports:
     bench,
     dtplyr,
     duckplyr,
+    ggplot2,
     glaredb,
-    polars
+    polars,
+    tidyr

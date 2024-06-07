@@ -14,6 +14,8 @@ format:
     footer: "#Tokyo.R"
     embed-resources: true
     reference-location: document
+execute:
+  cache: true
 lang: ja
 filters:
   - webr
@@ -68,23 +70,26 @@ DuckDBの紹介をしたりしてきました（2023年）
 
 # そして2024年……
 
----
+## 今、DuckDBがアツい！！！
 
 ::: {.incremental}
 
 - 4月2日：DuckDB BLOG上でduckplyr発表[^duckplyr]
 - 4月10日：duckplyrが速すぎるという検証結果のブログが話題に[^tidy-wrappers]
-- 6月3日：DuckDB 1.0.0リリース[^duckdb-100]（※Rパッケージはまだ）
+- 6月3日：DuckDB 1.0.0リリース[^duckdb-100]
 
 :::
 
 . . .
 
-**今、DuckDBがアツい！！！**
+1億行のCSVファイルから集計を行う"1 billion row challenge"[^1brc_orig]をRでやってみた結果DuckDBを使用した場合が高速だった報告がいくつかある[^1brc_1][^1brc_2]など、R界隈でもますます注目が集まっています。
 
 [^duckplyr]: [duckplyr: A dplyr backend for DuckDB](https://duckdb.org/2024/04/02/duckplyr)
 [^tidy-wrappers]: [The Truth About Tidy Wrappers](https://outsiderdata.netlify.app/posts/2024-04-10-the-truth-about-tidy-wrappers/benchmark_wrappers)
 [^duckdb-100]: [Announcing DuckDB 1.0.0](https://duckdb.org/2024/06/03/announcing-duckdb-100.html)
+[^1brc_orig]: <https://github.com/gunnarmorling/1brc>
+[^1brc_1]: <https://github.com/jrosell/1br>
+[^1brc_2]: [R One Billion Row Challenge: Is R Viable Option for Analyzing Huge Datasets?](https://www.r-bloggers.com/2024/06/r-one-billion-row-challenge-is-r-viable-option-for-analyzing-huge-datasets/)
 
 # DuckDB周辺のおさらい
 
@@ -94,7 +99,7 @@ DuckDBの紹介をしたりしてきました（2023年）
 - Apache Hadoop用に作られた**列指向**の**ファイルフォーマット**
   - 列方向に圧縮されるため大量のレコードを圧縮しやすい
   - 列単位でベクトル化した計算を行う分析処理と相性が良い
-- 速く型を正確に読み込めるため、大きなデータフレームの保存に向く
+- 速度・容量・型の豊富さから、大きなデータフレームの保存に向く
   - 「CSVをやめて人間を続けよう」[^csv-or-parquet]
 
 [^parquet]: [Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
@@ -126,15 +131,19 @@ Parquet読み書きのためだけに`arrow`を使用しなくても良い時代
 
 Apache Arrow周辺の主要なクエリエンジン
 
-- Acero ← 最速競争からドロップアウト
-- DataFusion ← Rust向け（他言語バインディング下火）
-- DuckDB ← 多くの言語から利用可能
-- Polars ← Python向け（Rustから使うと……）
+. . .
+
+- Acero ← 速度は優先事項ではない[^acero]
+- DataFusion ← Rust向け（他言語バインディングは関心低）
+- DuckDB ← 多くの言語から利用可能、SQLiteから置換しやすい
+- Polars ← Python向け（Rustは優先事項ではない）
 
 . . .
 
 DuckDBは最速クラスな上に多くの言語から利用可能なので、RustとPython以外の言語から使う場合は最有力\
-（この中で一番SQLが充実しているのでSQL重視ならRustとPythonでもDuckDBが良い）
+（この中でDuckDBが一番SQL充実しているので、SQL重視ならRustとPythonでもDuckDBが良い）
+
+[^acero]: [[DISCUSS] Acero roadmap / philosophy](https://lists.apache.org/thread/d28dby4gzt1v73sszx1564dtp4hx4yf2)
 
 ## duckplyr WASM
 
@@ -142,10 +151,119 @@ DuckDBは最速クラスな上に多くの言語から利用可能なので、Ru
 library(duckplyr, warn.conflicts = FALSE)
 
 mtcars |>
-#   as_duckplyr_df() |> # <- この行のコメントアウトを解除
+  # as_duckplyr_df() |> # <- この行のコメントアウトを解除
   summarise(
     across(everything(), \(x) mean(x, na.rm = TRUE)),
     .by = "cyl"
   ) |>
   arrange(cyl)
 ```
+
+## ベンチマーク data.frameへのクエリ 1/2
+
+```{r}
+#| echo: true
+#| code-fold: true
+#| code-summary: ベンチマーク用関数
+.gen_data <- \(n_group, n_row, n_col_value, .seed = 1) {
+  groups <- seq_len(n_group) |>
+    rep_len(n_row) |>
+    as.character()
+
+  set.seed(.seed)
+
+  runif(n_row * n_col_value, min = 0, max = 100) |>
+    round() |>
+    matrix(ncol = n_col_value) |>
+    tibble::as_tibble(
+      .name_repair = \(x) paste0("col_value_", seq_len(n_col_value))
+    ) |>
+    dplyr::mutate(col_group = groups, .before = 1)
+}
+
+.use_dplyr <-
+  function(.data) {
+    .data |>
+      dplyr::summarise(
+        value = sum(col_value_1, na.rm = TRUE),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group)
+  }
+
+.use_dtplyr <-
+  function(.data) {
+    .data |>
+      dtplyr::lazy_dt() |>
+      dplyr::summarise(
+        value = sum(col_value_1, na.rm = TRUE),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group) |>
+      dplyr::collect()
+  }
+
+.use_acero <-
+  function(.data) {
+    .data |>
+      arrow::as_arrow_table() |>
+      dplyr::summarise(
+        value = sum(col_value_1, na.rm = TRUE),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group) |>
+      dplyr::collect()
+  }
+
+.use_duckplyr <-
+  function(.data) {
+    .data |>
+      duckplyr::as_duckplyr_df() |>
+      dplyr::summarise(
+        # na.rm は非対応
+        value = sum(col_value_1),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group)
+  }
+
+.use_polars <-
+  function(.data) {
+    polars::as_polars_lf(.data)$group_by("col_group")$agg(
+      value = polars::pl$col("col_value_1")$sum()
+    )$sort("col_group")$collect() |>
+      tibble::as_tibble()
+  }
+```
+
+```{r}
+#| echo: true
+res_sum <- bench::press(
+  n_row = c(1e5, 1e6, 1e7),
+  n_col_value = c(1),
+  n_group = c(1e2, 1e3),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    bench::mark(
+      check = FALSE,
+      min_iterations = 5,
+      dplyr = .use_dplyr(dat),
+      dtplyr = .use_dtplyr(dat),
+      acero = .use_acero(dat),
+      duckplyr = .use_duckplyr(dat),
+      polars = .use_polars(dat)
+    )
+  }
+)
+```
+
+## ベンチマーク data.frameへのクエリ 2/2
+
+```{r}
+#| fig-align: center
+res_sum |>
+  ggplot2::autoplot("violin")
+```
+
+- DuckDBはdata.frameをDB内にコピーしないため速い
+- DuckDBの計算速度が速い
