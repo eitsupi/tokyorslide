@@ -1,0 +1,533 @@
+---
+title: >
+  <font color="yellow">duck</font>plyr<br/>
+  覚醒
+subtitle: "2024-06-08 第103回R勉強会@東京<br/>@eitsupi"
+format:
+  revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    embed-resources: true
+    reference-location: document
+execute:
+  # cache: true
+  echo: true
+lang: ja
+filters:
+  - webr
+webr:
+  show-startup-message: false
+  cell-options:
+    editor-font-scale: 0.5
+  packages:
+    - duckplyr
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 大手製造業 → バイオベンチャー
+- Excelが嫌になりRを触り初めて5年
+  - [Rockerプロジェクト (Shell, R, Docker)](https://rocker-project.org/)
+  - [Polars Rパッケージ (R, Rust)](https://pola-rs.github.io/r-polars/)
+  - [PRQL (Rust, R, Python)](https://prql-lang.org/)
+- 最近は数年ぶりに`ggplot2`をよく使ってます
+- 近況：引き継いだSciPyで方程式解くスクリプトを\
+  AIに食わせてJuliaに直したら10倍速になって感動
+
+:::
+
+::::
+
+# 前回までのあらすじ
+
+---
+
+[![](dtplyr-bench.png){fig-align="center" width=900}](https://eitsupi.github.io/tokyorslide/tokyor_100/)
+
+dplyrバックエンドの速度比較をしたり（2022年）
+
+---
+
+[![](sugohaya-duckdb.png){fig-align="center" width=900}](https://eitsupi.github.io/tokyorslide/tokyor_106/)
+
+DuckDBの紹介をしたりしてきました（2023年）
+
+# そして2024年……
+
+## 今、DuckDBがアツい！！！
+
+::: {.incremental}
+
+- 4月2日：DuckDB BLOG上でduckplyr発表[^duckplyr]
+- 4月10日：duckplyrが速すぎるという検証結果のブログが話題に[^tidy-wrappers]
+- 6月3日：DuckDB 1.0.0リリース[^duckdb-100]
+
+:::
+
+. . .
+
+1億行のCSVファイルから集計を行う"1 billion row challenge"[^1brc_orig]をRでやってみた結果DuckDBを使用した場合が高速だった報告がいくつかある[^1brc_1][^1brc_2]など、R界隈でもますます注目が集まっています。
+
+[^duckplyr]: [duckplyr: A dplyr backend for DuckDB](https://duckdb.org/2024/04/02/duckplyr)
+[^tidy-wrappers]: [The Truth About Tidy Wrappers](https://outsiderdata.netlify.app/posts/2024-04-10-the-truth-about-tidy-wrappers/benchmark_wrappers)
+[^duckdb-100]: [Announcing DuckDB 1.0.0](https://duckdb.org/2024/06/03/announcing-duckdb-100.html)
+[^1brc_orig]: <https://github.com/gunnarmorling/1brc>
+[^1brc_1]: <https://github.com/jrosell/1br>
+[^1brc_2]: [R One Billion Row Challenge: Is R Viable Option for Analyzing Huge Datasets?](https://www.r-bloggers.com/2024/06/r-one-billion-row-challenge-is-r-viable-option-for-analyzing-huge-datasets/)
+
+# DuckDB周辺のおさらい
+
+## Apache Parquet (1/2)
+
+- 2013年～[^parquet]
+- Apache Hadoop用に作られた**列指向**の**ファイルフォーマット**
+  - 列方向に圧縮されるため大量のレコードを圧縮しやすい
+  - 列単位でベクトル化した計算を行う分析処理と相性が良い
+- 速度・容量・型の豊富さから、大きなデータフレームの保存に向く
+  - 「CSVをやめて人間を続けよう」[^csv-or-parquet]
+
+[^parquet]: [Announcing Parquet 1.0: Columnar Storage for Hadoop](https://blog.twitter.com/engineering/en_us/a/2013/announcing-parquet-10-columnar-storage-for-hadoop)
+[^csv-or-parquet]: [そろそろRユーザーもApache ArrowでParquetを使ってみませんか？](https://notchained.hatenablog.com/entry/2019/12/17/213356)
+
+## Apache Parquet (2/2)
+
+- Parquetを読み書きできる主要なRパッケージ
+  - Spark経由の`sparkR`と`sparklyr`
+  - `arrow`： 多機能だがビルド大変
+  - `duckdb`： 多機能、factor型への特別対応なし
+  - `nanoparquet` (New!)： ビルド簡単、最低限の機能
+
+. . .
+
+`duckdb`の多機能化と`nanoparquet`の登場で、\
+Parquet読み書きのためだけに`arrow`を使用しなくても良い時代に
+
+## Apache Arrow
+
+- 2016年～[^arrow]
+- _A high-performance cross-system data layer for columnar in-memory analytics_
+- 言語に寄らない**列指向**の**インメモリフォーマット**の標準を目指しているプロジェクト
+  - Arrowを介することで、ある列指向データから別の列指向データへの変換を個別に実装する必要はなくなる
+
+[^arrow]: [The Apache® Software Foundation Announces Apache Arrow™ as a Top-Level Project](https://blogs.apache.org/foundation/entry/the_apache_software_foundation_announces87)
+
+## クエリエンジン競争（※個人的見解）
+
+Apache Arrow周辺の主要なクエリエンジン
+
+. . .
+
+- Acero ← 速度は優先事項ではない[^acero]
+- DataFusion ← Rust向け（他言語バインディングは関心低）
+- DuckDB ← 多くの言語から利用可能、SQLiteから置換しやすい
+- Polars ← Python向け（Rustは優先事項ではない）
+
+. . .
+
+DuckDBは最速クラスな上に多くの言語から利用可能\
+（それに加えてSQLも最も充実している）
+
+[^acero]: [[DISCUSS] Acero roadmap / philosophy](https://lists.apache.org/thread/d28dby4gzt1v73sszx1564dtp4hx4yf2)
+
+## duckplyrとは
+
+::: {.incremental}
+
+- `dplyr`の高速バックエンドとして作られたRパッケージ
+- `dplyr`のクエリをDuckDBのリレーショナルAPIに変換する
+- Rのデータフレームへのクエリに特化（通常の`dplyr`と同じ）
+  - 本来DuckDBの得意とするParquet等へのクエリへの対応は途中（後述）
+    - 現時点ではデータフレーム以外には`dbplyr`使う方が良い
+- 遅延評価を行う他のバックエンドと異なり`dplyr::collect()`なしで即座にデータフレームを返す（通常の`dplyr`と同じ）
+
+:::
+
+## duckplyr WASM
+
+DuckDBなので当然webR上でも動きます
+
+```{webr-r}
+library(dplyr, warn.conflicts = FALSE)
+# library(duckplyr, warn.conflicts = FALSE) # <- この行のコメントアウトを解除
+
+mtcars |>
+  summarise(
+    across(everything(), \(x) mean(x, na.rm = TRUE)),
+    .by = "cyl"
+  ) |>
+  arrange(cyl)
+```
+
+# ベンチマーク
+
+## data.frameへのクエリ 1/2
+
+```{r}
+#| code-fold: true
+#| code-summary: ベンチマーク用関数
+.gen_data <- \(n_group, n_row, n_col_value, .seed = 1) {
+  groups <- seq_len(n_group) |>
+    rep_len(n_row) |>
+    as.character()
+
+  set.seed(.seed)
+
+  runif(n_row * n_col_value, min = 0, max = 100) |>
+    round() |>
+    matrix(ncol = n_col_value) |>
+    tibble::as_tibble(
+      .name_repair = \(x) paste0("col_value_", seq_len(n_col_value))
+    ) |>
+    dplyr::mutate(col_group = groups, .before = 1)
+}
+
+.use_dplyr <-
+  function(.data) {
+    .data |>
+      dplyr::summarise(
+        value = sum(col_value_1, na.rm = TRUE),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group)
+  }
+
+.use_dtplyr <-
+  function(.data) {
+    .data |>
+      dtplyr::lazy_dt() |>
+      dplyr::summarise(
+        value = sum(col_value_1, na.rm = TRUE),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group) |>
+      dplyr::collect()
+  }
+
+.use_acero <-
+  function(.data) {
+    .data |>
+      arrow::as_arrow_table() |>
+      dplyr::summarise(
+        value = sum(col_value_1, na.rm = TRUE),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group) |>
+      dplyr::collect()
+  }
+
+.use_duckplyr <-
+  function(.data) {
+    .data |>
+      duckplyr::as_duckplyr_df() |>
+      dplyr::summarise(
+        # na.rm は非対応
+        value = sum(col_value_1),
+        .by = col_group
+      ) |>
+      dplyr::arrange(col_group)
+  }
+
+.use_polars <-
+  function(.data) {
+    polars::as_polars_lf(.data)$group_by("col_group")$agg(
+      value = polars::pl$col("col_value_1")$sum()
+    )$sort("col_group")$collect() |>
+      tibble::as_tibble()
+  }
+```
+
+```{r}
+res_sum <- bench::press(
+  n_row = c(1e5, 1e6, 1e7),
+  n_col_value = c(1),
+  n_group = c(1e2, 1e3),
+  {
+    dat <- .gen_data(n_group, n_row, n_col_value)
+    bench::mark(
+      check = FALSE,
+      min_iterations = 5,
+      dplyr = .use_dplyr(dat),
+      dtplyr = .use_dtplyr(dat),
+      acero = .use_acero(dat),
+      duckplyr = .use_duckplyr(dat),
+      polars = .use_polars(dat)
+    )
+  }
+)
+```
+
+## data.frameへのクエリ 2/2
+
+```{r}
+#| echo: false
+#| fig-align: center
+res_sum |>
+  ggplot2::autoplot("violin")
+```
+
+- DuckDBはdata.frameをDB内にコピーしないため速い
+- DuckDBの計算速度が速い
+
+## Parquetへのクエリ 1/10
+
+DuckDBのリポジトリに置かれているいつものParquet[^parquet]を使用します。
+
+[^parquet]: [DuckDB quacks Arrow: A zero-copy data integration between Apache Arrow and DuckDB](https://arrow.apache.org/blog/2021/12/03/arrow-duckdb/)
+
+```r
+curl::curl_download(
+  "https://github.com/duckdb/duckdb-data/releases/download/v1.0/lineitemsf1.snappy.parquet",
+  "lineitemsf1.snappy.parquet"
+)
+```
+
+サクッと時間を計りたいので`tictoc`パッケージをロードします。
+
+```{r}
+library(tictoc)
+```
+
+## Parquetへのクエリ 2/10
+
+`nanoparquet`で読み込み`dplyr`でクエリを実行する場合
+
+```{r}
+tic()
+
+nanoparquet::read_parquet("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE))
+
+toc()
+```
+
+## Parquetへのクエリ 3/10
+
+Acero (`arrow`パッケージ) の場合
+
+```{r}
+tic()
+
+arrow::open_dataset("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## Parquetへのクエリ 4/10
+
+Polarsの場合
+
+```{r}
+tic()
+
+polars::pl$scan_parquet("lineitemsf1.snappy.parquet")$filter(
+  polars::pl$col("l_shipdate") >= "1994-01-01",
+  polars::pl$col("l_shipdate") < "1995-01-01",
+  polars::pl$col("l_discount") >= 0.05, polars::pl$col("l_discount") < 0.07,
+  polars::pl$col("l_quantity") < 24
+)$select(
+  revenue = (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()
+) |>
+  as.data.frame()
+
+toc()
+```
+
+## Parquetへのクエリ 5/10
+
+GlareDB（DataFusionに基づいた分析用RDBMS）の場合
+
+```{r}
+tic()
+
+glaredb::glaredb_sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+  as.data.frame()
+
+toc()
+```
+
+## Parquetへのクエリ 6/10
+
+`duckplyr`の場合
+
+```{r}
+#| label: duckplyr
+#| eval: false
+tic()
+
+duckplyr::duckplyr_df_from_parquet("lineitemsf1.snappy.parquet") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE))
+
+toc()
+```
+
+## Parquetへのクエリ 7/10
+
+`duckplyr`の場合……は、どうやらプッシュダウンが上手く動作しておらず遅いようです[^duckplyr-pushdown]。今後に期待。
+
+[^duckplyr-pushdown]: <https://github.com/duckdblabs/duckplyr/issues/172>
+
+```{r}
+#| label: duckplyr
+#| eval: true
+#| echo: false
+```
+
+## Parquetへのクエリ 8/10
+
+`duckdb`の場合
+
+```{r}
+tic()
+
+duckdb:::sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+  as.data.frame()
+
+toc()
+```
+
+## Parquetへのクエリ 9/10
+
+`duckdb`の場合（dbplyr経由）
+
+```{r}
+tic()
+
+dplyr::tbl(DBI::dbConnect(duckdb::duckdb()), "read_parquet('lineitemsf1.snappy.parquet')") |>
+  dplyr::filter(
+    l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+    l_discount >= 0.05, l_discount < 0.07,
+    l_quantity < 24
+  ) |>
+  dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+  dplyr::collect()
+
+toc()
+```
+
+## Parquetへのクエリ 10/10
+
+
+```{r}
+#| code-fold: true
+#| code-summary: ベンチマーク
+bnch <- bench::mark(
+  check = FALSE,
+  min_iterations = 10,
+  acero = arrow::open_dataset("lineitemsf1.snappy.parquet") |>
+    dplyr::filter(
+      l_shipdate >= "1994-01-01", l_shipdate < "1995-01-01",
+      l_discount >= 0.05, l_discount < 0.07,
+      l_quantity < 24
+    ) |>
+    dplyr::summarise(revenue = sum(l_extendedprice * l_discount, na.rm = TRUE)) |>
+    dplyr::collect(),
+  polars = polars::pl$scan_parquet("lineitemsf1.snappy.parquet")$filter(
+    polars::pl$col("l_shipdate") >= "1994-01-01",
+    polars::pl$col("l_shipdate") < "1995-01-01",
+    polars::pl$col("l_discount") >= 0.05, polars::pl$col("l_discount") < 0.07,
+    polars::pl$col("l_quantity") < 24
+  )$select(
+    revenue = (polars::pl$col("l_extendedprice") * polars::pl$col("l_discount"))$sum()
+  ) |>
+    as.data.frame(),
+  glaredb = glaredb::glaredb_sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+    as.data.frame(),
+  duckdb = duckdb:::sql("
+SELECT
+  sum(l_extendedprice * l_discount) AS revenue
+FROM read_parquet('lineitemsf1.snappy.parquet')
+WHERE
+  l_shipdate >= '1994-01-01' AND l_shipdate < '1995-01-01'
+  AND l_discount >= 0.05 AND l_discount < 0.07
+  AND l_quantity < 24
+") |>
+    as.data.frame()
+)
+```
+
+```{r}
+#| echo: false
+#| fig-align: center
+bnch |>
+  ggplot2::autoplot("violin")
+```
+
+## まとめ
+
+::: {.incremental}
+
+- どんどん速くなるDuckDB
+- `duckplyr`で手軽さUP
+
+:::
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
+
+## バージョン情報
+
+```{r}
+sessioninfo::session_info()
+```
