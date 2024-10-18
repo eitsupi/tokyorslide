@@ -14,3 +14,4 @@ title: "資料"
 - [Japan.R 2023　ショートセッション　pola-rs/r-polarsができて一年経ちました](./japanr2023/index.html)
 - [第112回R勉強会@東京（#TokyoR）LT Rパッケージのドキュメントを読もう！](./tokyor_112lt/index.html)
 - [第113回R勉強会@東京（#TokyoR）応用セッション duckplyr覚醒！](./tokyor_113/index.html)
+- [第115回R勉強会@東京（#TokyoR）応用セッション R-universeとR-multiverse](./tokyor_115/index.html)
