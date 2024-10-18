@@ -1,0 +1,307 @@
+---
+title: >
+  R-universe<br/>
+  R-multiverse
+subtitle: "2024-10-19 第115回R勉強会@東京<br/>@eitsupi"
+format:
+  live-revealjs:
+    theme: [night, custom.scss]
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Tokyo.R"
+    embed-resources: true
+    reference-location: document
+lang: ja
+engine: knitr
+---
+
+{{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 大手製造業 → バイオベンチャー
+- Excelが嫌になりRを触り初めて5年半
+  - [Rocker Project (Shell, R, Docker, Dev Container)](https://rocker-project.org/)
+  - [Polars Rパッケージ (R, Rust)](https://pola-rs.github.io/r-polars/)
+  - [PRQL (Rust, R, Python)](https://prql-lang.org/)
+- 近況：[r-polarsの書き直し](https://github.com/eitsupi/neo-r-polars)が終わりません。
+
+:::
+
+::::
+
+## Rパッケージ
+
+豊富なパッケージのインストールしやすさはRの魅力の一つ
+
+::: {.incremental}
+
+- 主なリポジトリとパッケージ数
+  - CRAN（1997年～）： **21,000**以上
+  - Bioconductor（2001年～）： **2,000**以上
+  - **R-universe**（2021年～）: **26,000**以上
+
+:::
+
+. . .
+
+今日は**R-universe**と**R-multiverse**（2024年～）を紹介！
+
+# リポジトリの仕組み
+
+## Rパッケージのリポジトリ 1/3
+
+- 例えば
+  - <https://cran.r-project.org/> (CRAN)
+  - <https://bioconductor.org/packages/3.10/bioc/> (Bioconductor)
+- `install.packages()`関数から呼ばれている関数の中を見てみよう！
+  - `available.packages()`
+  - `contrib.url()`
+
+```{webr}
+print(available.packages)
+```
+
+## Rパッケージのリポジトリ 2/3
+
+::: {.incremental}
+
+- 関数から参照される階層構造を保持する静的ウェブサイト
+- `src/contrib/`, `bin/windows/contrib/`, ...: \
+  パッケージの置いてある階層
+  - `/PACKAGES`: パッケージの情報の記載されたファイル
+    - <https://cran.r-project.org/src/contrib/PACKAGES>
+    - <https://bioconductor.org/packages/3.10/bioc/PACKAGES>
+
+:::
+
+## Rパッケージのリポジトリ 3/3
+
+<https://cran.r-project.org/src/> を開くと、\
+Apache Serverによりディレクトリ構造を確認できます。
+
+. . .
+
+![](./index-of-src.png){fig-align="center"}
+
+## 自分でリポジトリを作りたい！
+
+簡単にリポジトリを作成できるよう補助してくれる\
+Rパッケージが存在
+
+::: {.incremental}
+
+- [`miniCRAN`](https://github.com/andrie/miniCRAN) (2014~): \
+  あるリポジトリ内のパッケージと依存関係をローカルにコピーし\
+  リポジトリを生成\
+  （例えばCRANの一部のスナップショットを作成）
+- [`drat`](https://github.com/eddelbuettel/drat) (2015~): \
+  独自のリポジトリを生成、GitHub Pagesで簡単に公開
+
+:::
+
+# 自分で作りたい……？
+
+# いや、勝手に生えてきてほしい！
+
+# 今すぐR-universeに登録だ！
+
+## [R-universe](https://r-universe.dev/)とは
+
+. . .
+
+GitHubアカウントだけあれば使える、\
+自動化されたRパッケージリポジトリ生成プラットフォーム
+
+::: {.incremental}
+
+1. GitHub上に`<ユーザー名>.r-universe.dev`という名前の\
+   Gitリポジトリを作成
+2. 上記のGitリポジトリに`packages.json`という\
+   パッケージ情報を載せたファイルを追加
+3. [r-universe GitHub App](https://github.com/apps/r-universe/installations/new)を
+   アカウントに追加
+
+:::
+
+. . .
+
+上記手順を行うと[^set-up]、GitHub Actionsによりパッケージがビルドされ\
+R-universe上にそのユーザー名を冠したリポジトリを生成
+
+[^set-up]: [Set up your own universe](https://docs.r-universe.dev/publish/set-up.html)
+
+# CRANとR-universeの比較
+
+## リリース難度 (1/4)
+
+. . .
+
+|                          | CRAN         | R-universe |
+| ------------------------ | ------------ | ---------- |
+| 動作チェック             | 厳しい       | 緩い       |
+| 逆依存関係テスト         | あり         | なし       |
+| 人力チェック             | あり         | なし       |
+| メンテナの存在確認       | 厳しい       | 緩い       |
+| 過去バージョンアーカイブ | あり         | なし[^git] |
+| ビルドツール             | 古い・乏しい | 最新・豊富 |
+| リリース頻度             | 12回/年      | 1回/時間   |
+
+[^git]: R-universe上のパッケージはGitリポジトリのコミットに紐付いているため、Gitリポジトリが部分的にアーカイブの機能を果たしている。
+
+## リリース難度 (2/4)
+
+CRANはユーザーに優しく、開発者には厳しい[^主観]。
+
+[^主観]: 個人の意見です。
+
+::: {.incremental}
+
+- 開発者は本名とメアド登録必須
+- テスト厳しい
+- 全バージョン保持（※バイナリ除く）
+- 外部ツールが古かったりなかったりする
+  - **Rust**は2023年4月リリースの1.69.0で固定
+  - **Go**がない
+- パッケージにバイナリを含めてはならない
+
+:::
+
+## リリース難度 (3/4)
+
+R-universeは開発者には優しいが、ユーザーが使用するときは不安。
+
+::: {.incremental}
+
+- 外部ツール・バイナリの利用は柔軟
+  - ビルド中に外部ツールのインストールすら可能
+- リポジトリは開発者がいつでも削除できる
+- リリースは開発者がいつでもできる
+- リリースされたパッケージがテストに通っているか不明
+- 過去バージョンを容易にインストールすることはできない[^renv]
+
+:::
+
+[^renv]: `renv`を使えば可能。R-universe上のパッケージの元になったGitリポジトリのコミットを記録しそのコミットからパッケージをインストールする機能があるため。
+<https://ropensci.org/blog/2022/01/06/runiverse-renv/>
+
+## リリース難度 (4/4)
+
+実際、CRANにリリースできないパッケージでも\
+R-universeならリリースできている。
+
+. . .
+
+例えば……
+
+::: {.incremental}
+
+- [`cmdstanr`](https://github.com/stan-dev/cmdstanr)
+- [`polars`](https://github.com/pola-rs/r-polars)
+- [`colorout`](https://github.com/jalvesaq/colorout)
+- [`adbcsnowflake`, `adbcflightsql`](https://github.com/apache/arrow-adbc)
+
+:::
+
+# これらのパッケージを<br/>良い感じにインストールしたい
+
+# 両方の良いところ取りをした<br/>使いやすいリポジトリが<br/>あればなあ……
+
+# その願い、<br/>R-multiverseで叶うかも
+
+## [R-multiverse](https://r-multiverse.org/)とは (1/2)
+
+*A community-curated package repository system, powered by
+R-universe*
+
+::: {.incremental}
+
+- R-universe上に構築された、\
+  独自の登録基準を持つコミュニティ管理のリポジトリ
+  - [R Consortium Repositories Working Group](https://github.com/RConsortium/r-repositories-wg)発祥
+  - [R Consortium](https://r-consortium.org/)後援
+  - R-universe上での特別扱い
+    - 一つの組織で複数のリポジトリを持つ\
+      （[r-multiverse](https://github.com/r-universe/r-multiverse)と[r-multiverse-staging](https://github.com/r-universe/r-multiverse-staging)）
+    - パッケージ数制限なし
+
+:::
+
+## [R-multiverse](https://r-multiverse.org/)とは (2/2)
+
+::: {.incremental}
+
+- 2つのリポジトリ
+  - GitHubリリースに紐付いたパッケージを収録\
+    （[Communityリポジトリ](https://community.r-multiverse.org/)）
+    - 作者の意志でリリースできる
+  - テストに合格したパッケージのみを収録\
+    （[Productionリポジトリ](https://production.r-multiverse.org)） ← **2024年11月15日稼働開始予定**
+    - Communityリポジトリ内の正常に動作するパッケージのみ収録
+    - 四半期毎に凍結しリリース頻度を制限
+    - 将来的には[Posit Package Manager](https://p3m.dev)によりアーカイブも実現？[^p3m]
+
+:::
+
+[^p3m]: <https://github.com/r-multiverse/help/issues/84>等で言及あり。
+
+## R-multiverseを使うメリット
+
+::: {.incremental}
+
+- 「GitHubリリースの作成 = パッケージのリリース」という\
+  一般的に確立された手順でのリリースが保証されている
+- インストール先として、\
+  開発バージョンを個人のリポジトリから、\
+  リリースバージョンをR-multiverseから、\
+  という使い分けができる
+- 中央集権的リポジトリとして将来性あり
+
+:::
+
+## R-multiverseの活用
+
+`polars`パッケージは推奨インストール方法に採用
+
+```r
+Sys.setenv(NOT_CRAN = "true")
+install.packages("polars", repos = "https://community.r-multiverse.org")
+```
+
+. . .
+
+以前の推奨だった独自のリポジトリは、\
+将来的にプレリリースバージョンの展開に利用予定\
+(現在は全く同じコミットを参照している)
+
+```r
+Sys.setenv(NOT_CRAN = "true")
+install.packages("polars", repos = "https://rpolars.r-universe.dev")
+```
+
+# まとめ
+
+CRAN、R-universe、R-multiverseの違いを理解して\
+快適なRパッケージ生活を！
+
+. . .
+
+<div style="text-align: right;">
+**Enjoy!**
+</div>
