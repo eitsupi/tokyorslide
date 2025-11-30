@@ -1,0 +1,104 @@
+---
+title: >
+  新しいPolars Rパッケージの紹介
+subtitle: "2025-12-06 Japan.R 2025<br/>@eitsupi"
+format:
+  revealjs:
+    theme: night
+    width: 1280
+    height: 720
+    slide-number: true
+    chalkboard: false
+    preview-links: auto
+    footer: "#Japan.R 2025"
+    embed-resources: true
+    reference-location: document
+execute:
+  cache: true
+  echo: true
+lang: ja
+---
+
+# はじめに
+
+## 自己紹介
+
+:::: {.columns}
+
+::: {.column width="25%"}
+
+![](../image/eitsupi.jpg){fig-align="center" width="300" height="300"}
+
+:::
+
+::: {.column width="75%"}
+
+- [@eitsupi](https://github.com/eitsupi)
+- 本業：今夏に転職し、2年ぶりにdbt
+- 副業：Columnar社でADBC周りのお手伝い
+- Excelが嫌になりRを触り初めて6年
+  - [Rockerプロジェクト (Shell, R, Docker)](https://rocker-project.org/)
+  - [Polars Rパッケージ (R, Rust)](https://pola-rs.github.io/r-polars/)
+  - [PRQL (Rust, R, Python)](https://prql-lang.org/)
+
+:::
+
+::::
+
+# 前回までのあらすじ
+
+---
+
+これまでdplyrバックエンドの話を色々したり
+
+Polars Rパッケージの紹介もしていました。
+
+# 本日話すこと
+
+::: {.incremental}
+
+- RでPolarsを使ってみる
+  - Python Polars風構文
+  - dplyrバックエンド
+- 技術的な話
+  - mirai/reticulate統合
+  - S7
+
+:::
+
+# RでPolarsを使ってみる
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+```python
+import polars as pl
+import polars.selectors as cs
+
+pl.DataFrame(
+    {
+        "x": [1, 2, 3],
+        "y": ["a", "b", "c"],
+    }
+).select(cs.by_name("x"))
+```
+
+:::
+
+::: {.column width="50%"}
+
+```r
+library(polars)
+
+pl$DataFrame(
+  x = c(1, 2, 3),
+  y = c("a", "b", "c"),
+)$select(cs$by_name("x"))
+```
+
+:::
+
+::::
+
+# hoge

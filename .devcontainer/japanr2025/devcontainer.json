@@ -1,0 +1,18 @@
+{
+  "name": "japanr2025",
+  "image": "ghcr.io/rocker-org/devcontainer/r-ver:4",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/quarto-cli:1": {
+      "version": "1.8"
+    },
+    "ghcr.io/rocker-org/devcontainer-features/r-dependent-packages:0.2.0": {
+      "manifestRoot": "japanr2025",
+      "when": "updateContent",
+      "additionalRepositories": "rmv = 'https://community.r-multiverse.org'"
+    }
+  },
+  "containerEnv": {
+    "NOT_CRAN": "true",
+    "PKG_SYSREQS": "false"
+  }
+}
