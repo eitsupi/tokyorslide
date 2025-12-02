@@ -9,5 +9,6 @@ Imports:
     ggplot2,
     polars,
     reticulate,
+    smvr,
     tictoc,
     tidypolars

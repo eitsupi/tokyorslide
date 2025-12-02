@@ -20,7 +20,7 @@ json_urls <- gert::git_remote_ls(
 duckplyr::read_json_duckdb(json_urls, options = list(filename = TRUE)) |>
   duckplyr::compute_csv("out.csv")
 
-df_wider <- duckplyr::read_csv_duckdb("out.csv") |>
+json_data <- duckplyr::read_csv_duckdb("out.csv") |>
   duckplyr::as_tbl() |>
   dplyr::mutate(
     date = dplyr::sql(
@@ -28,27 +28,36 @@ df_wider <- duckplyr::read_csv_duckdb("out.csv") |>
     ) |>
       as.Date()
   ) |>
+  duckplyr::as_duckdb_tibble() |>
   dplyr::select(!filename) |>
-  tidyr::pivot_wider(
-    names_from = flavor,
-    values_from = rustc
-  ) |>
-  dplyr::collect()
+  dplyr::group_by(date, flavor) |>
+  tidyr::fill(tidyselect::everything()) |>
+  dplyr::ungroup()
 
-all_dates <- seq(
-  from = min(df_wider$date),
-  to = max(df_wider$date),
-  by = "day"
-)
-
-df_wider |>
-  dplyr::right_join(
-    duckplyr::duckdb_tibble(date = all_dates),
-    by = "date"
+rust_versions <- gert::git_remote_ls("https://github.com/rust-lang/rust") |>
+  dplyr::select(ref) |>
+  dplyr::filter(grepl("^refs/tags/", ref)) |>
+  dplyr::mutate(
+    ref = gsub("^refs/tags/", "", ref) |>
+      smvr::parse_semver() |>
+      suppressWarnings()
   ) |>
-  dplyr::collect() |>
-  # Maybe bug of dbplyr or duckplyr. fill does not work
-  # duckplyr::as_tbl() |>
-  # dbplyr::window_order(date) |>
-  dplyr::arrange(date) |>
-  tidyr::fill(tidyselect::everything())
+  dplyr::filter(!is.na(ref)) |>
+  dplyr::pull(ref) |>
+  sort() |>
+  as.character() |>
+  as.factor()
+
+json_data |>
+  dplyr::filter() |>
+  dplyr::mutate(
+    version = factor(rustc, levels = rust_versions)
+  ) |>
+  dplyr::select(date, flavor, version) |>
+  ggplot2::ggplot(
+    ggplot2::aes(x = date, y = version, group = flavor, color = flavor)
+  ) +
+  ggplot2::geom_step() +
+  ggplot2::scale_y_discrete(
+    limits = rust_versions[smvr::as_smvr(as.character(rust_versions)) >= "1.70.0"]
+  )
