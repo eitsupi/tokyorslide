@@ -34,7 +34,8 @@ lang: ja
 ::: {.column width="75%"}
 
 - [@eitsupi](https://github.com/eitsupi)
-- 本業：今夏に転職し、2年ぶりにdbt
+- 本業：手料理サブスク つくりおき.jp の  
+  　　　データ基盤周り（dbt）
 - 副業：Columnar社でADBC周りのお手伝い
 - Excelが嫌になりRを触り初めて6年
   - [Rockerプロジェクト (Shell, R, Docker)](https://rocker-project.org/)
@@ -101,4 +102,8 @@ pl$DataFrame(
 
 ::::
 
-# hoge
+# 余談： インストール
+
+## MSRV問題
+
+- R-multiverseを使いましょう
