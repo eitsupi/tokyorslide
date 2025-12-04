@@ -37,7 +37,7 @@ lang: ja
 - 本業：手料理サブスク つくりおき.jp の  
   　　　データ基盤周り（dbt）
 - 副業：Columnar社でADBC周りのお手伝い
-- Excelが嫌になりRを触り初めて6年
+- Excelが嫌になりRを使い始めて6年
   - [Rockerプロジェクト (Shell, R, Docker)](https://rocker-project.org/)
   - [Polars Rパッケージ (R, Rust)](https://pola-rs.github.io/r-polars/)
   - [PRQL (Rust, R, Python)](https://prql-lang.org/)
@@ -64,6 +64,21 @@ Polars Rパッケージの紹介もしていました。
 - 技術的な話
   - mirai/reticulate統合
   - S7
+
+:::
+
+# Polarsについて
+
+## Polars
+
+::: {.incremental}
+
+- 「最速のデータフレームライブラリの一つ」
+- Rust製
+- Apache Arrowエコシステム
+- Pythonパッケージが人気
+  - 中身のRustパッケージも公式
+  - 非公式：Nodo.js、R、Ruby
 
 :::
 
@@ -102,8 +117,26 @@ pl$DataFrame(
 
 ::::
 
+# 何その構文
+
+## reticulate経由でPython Polars
+
+```r
+
+```
+
+## Polars構文
+
+- Python Polarsを参考にRust Polarsを書こうととすると😇
+
 # 余談： インストール
 
 ## MSRV問題
 
 - R-multiverseを使いましょう
+
+# dplyrバックエンド
+
+## tidypolars
+
+
