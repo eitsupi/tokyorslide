@@ -11,7 +11,7 @@ format:
     chalkboard: false
     preview-links: auto
     footer: "#Japan.R 2025"
-    # embed-resources: true
+    embed-resources: true
     reference-location: document
 execute:
   cache: true
