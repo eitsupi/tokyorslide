@@ -34,9 +34,9 @@ lang: ja
 ::: {.column width="75%"}
 
 - [@eitsupi](https://github.com/eitsupi)
-- 本業：手料理サブスク つくりおき.jp の  
+- 本業：手料理サブスク [つくりおき.jp](https://www.tsukurioki.jp/) の  
   　　　データ基盤周り（dbt）
-- 副業：Columnar社でADBC周りのお手伝い
+- 副業：[Columnar社](https://columnar.tech/)でADBC周りのお手伝い
 - Excelが嫌になりRを使い始めて6年
   - [Rockerプロジェクト (Shell, R, Docker)](https://rocker-project.org/)
   - [Polars Rパッケージ (R, Rust)](https://pola-rs.github.io/r-polars/)
@@ -50,21 +50,45 @@ lang: ja
 
 ---
 
-これまでdplyrバックエンドの話を色々したり
+発表するの久しぶりなので、  
+関連するこれまでの発表を振り返ってみましょう！
 
-Polars Rパッケージの紹介もしていました。
+::: {.incremental}
+
+- 2022年03月 Tokyo.R [arrowパッケージの紹介](https://eitsupi.github.io/tokyorslide/tokyor_97/)
+- 2022年07月 Tokyo.R [dtplyrパッケージの紹介](https://eitsupi.github.io/tokyorslide/tokyor_100/)
+- 2023年01月 Tokyo.R [polarsパッケージの紹介](https://eitsupi.github.io/tokyorslide/tokyor_103lt/)
+- 2023年06月 Tokyo.R [DuckDBの紹介](https://eitsupi.github.io/tokyorslide/tokyor_106/)
+- 2023年12月 Japan.R [polarsパッケージの紹介](https://eitsupi.github.io/tokyorslide/japanr2023/)
+- 2024年06月 Tokyo.R [duckplyrパッケージの紹介](https://eitsupi.github.io/tokyorslide/tokyor_113/)
+
+:::
+
+. . .
+
+<div style="text-align: right;">
+
+あの人いつもdplyr周りの話してる……。
+
+</div>
 
 ---
 
 ## 本日話すこと
 
+1年かけてpolarsパッケージを完全に書き直したので[^etienne][^polars0]、  
+改めて紹介したい！
+
 ::: {.incremental}
+
+[^etienne]: 1人でやったわけではなく、[Etienne Bacherさん](https://github.com/etiennebacher)もめっちゃ作業してくださった。
+[^polars0]: 旧実装からそのままコピーしただけの部分もある。
 
 - RでPolarsを使ってみる
   - Python Polars風構文
   - dplyrバックエンド
 - 技術的な話
-  - nanoarrowエコシステム
+  - clockパッケージのサポート
   - mirai/reticulate統合
   - S7
 
@@ -80,16 +104,35 @@ Polars Rパッケージの紹介もしていました。
 
 - 「最速のデータフレームライブラリの一つ」
 - Rust製
-- Apache Arrowエコシステム
-- Pythonパッケージが人気
-  - 中身のRustパッケージも公式
-  - 非公式：Nodo.js、R、Ruby
+- 内部データはApache Arrow形式
+- Pythonパッケージがpandasとの比較で有名
+  - 公式パッケージ　：Python、Rust
+  - 非公式パッケージ：Nodo.js、R、Ruby
+- 現在はPolars社（オランダ）が本体を開発
 
 :::
 
 ---
 
-## （ここに良い感じのベンチマーク結果が入る）
+## R Polars
+
+::: {.incremental}
+
+- Rust PolarsのRバインディング
+  - APIはRust PolarsではなくPython Polarsを模倣する方針
+    - そのせいでRの行数が……（R 5万行超、Rust 1万行超）
+- 依存Rパッケージ（必須）：rlang、S7
+  - 旧R Polarsは依存パッケージなしに拘っていたが、  
+    辛過ぎたので「rlang依存しないとヤダヤダ」と私が駄々をこねた
+  - S7については後述
+  - 加えて、vctrs、blob、hmsもほぼ必須
+- Rust側依存関係：polars、savvy、flume
+
+:::
+
+---
+
+（良い感じのベンチマーク結果を入れたかったページ）
 
 . . .
 
@@ -107,8 +150,12 @@ Polars Rパッケージの紹介もしていました。
 ```
 
 <div style="text-align: right;">
+
 [2025-12-01に公開した記事より](https://zenn.dev/eitsupi/articles/r-polars-2025)
+
 </div>
+
+先んじてZennに記事を投稿済なので、そちらをご確認ください！
 
 # RでPolarsを使ってみる
 
@@ -151,17 +198,26 @@ pl$DataFrame(
 
 ::::
 
-# 何その構文
+. . .
 
-## reticulate経由でPython Polars
+<div style="text-align: right;">
 
-```r
+何その構文！？
 
-```
+</div>
 
-## Polars構文
+## Python Polarsを模倣する意味
 
-- Python Polarsを参考にRust Polarsを書こうととすると😇
+# Base R S3メソッド
+
+# dplyr/tidyr S3メソッド
+
+## tidypolars
+
+- dplyrバックエンド
+- 多数のパッケージの関数を、dplyr動詞内で使用可能にする
+  - 動詞内の関数を検出し、polarsの式に置き換える  
+    （dbplyrやarrowパッケージに類似）
 
 # 余談： インストール
 
@@ -169,25 +225,33 @@ pl$DataFrame(
 
 - R-multiverseを使いましょう
 
-# dplyrバックエンド
+## Windows arm64
 
-## tidypolars
+::: {.incremental}
 
-- dplyrバックエンド
-- 多数のパッケージの関数を、dplyr動詞内で使用可能にする
-  - 動詞内の関数を検出し、polarsの式に置き換える（arrowパッケージに類似）
+- 昨日[^pr1684]からarm64版Windowsにも対応
+  - 対応作業に時間をつかってしまい、  
+    この資料を作るための貴重な時間が失われた……
+  - バイナリパッケージ配布はR-universeにもないため、  
+    以下のように`NOT_CRAN="true"`を設定し  
+    自動バイナリダウンロードの有効化を推奨
+
+    ```r
+    Sys.setenv(NOT_CRAN = "true")
+    install.packages('polars', repos = c("https://rpolars.r-universe.dev", getOption("repos")))
+    ```
+
+[^pr1684]: <https://github.com/pola-rs/r-polars/pull/1684>
+
+:::
 
 # 技術的な話
 
-## mirai統合
+## mirai統合 / reticulate統合
 
-パッケージ読み込み時に
-
-## reticulate統合
-
-パッケージ読み込み時に`reticulate::r_to_py()`の
-S3メソッドを追加
-→
+- mirai：別のRセッション（同一マシン/別マシン）に  
+  polarsオブジェクトを転送する
+- reticulate：Pythonにpolarsオブジェクトを転送する
 
 ## S7採用
 
