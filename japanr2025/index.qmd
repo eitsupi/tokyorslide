@@ -50,7 +50,7 @@ lang: ja
 
 ---
 
-発表するの久しぶりなので、  
+久しぶりに発表させてもらうので、  
 関連するこれまでの発表を振り返ってみましょう！
 
 ::: {.incremental}
@@ -86,9 +86,9 @@ lang: ja
 
 - RでPolarsを使ってみる
   - Python Polars風構文
-  - dplyrバックエンド
+  - S3メソッド（Base R、dplyr）
 - 技術的な話
-  - clockパッケージのサポート
+  - Rベクトルの型とArrow型の対応
   - mirai/reticulate統合
   - S7
 
@@ -102,13 +102,17 @@ lang: ja
 
 ::: {.incremental}
 
-- 「最速のデータフレームライブラリの一つ」
+- 「最速のデータフレームライブラリの一つ」[^datafusion-doc]
 - Rust製
 - 内部データはApache Arrow形式
 - Pythonパッケージがpandasとの比較で有名
   - 公式パッケージ　：Python、Rust
   - 非公式パッケージ：Nodo.js、R、Ruby
 - 現在はPolars社（オランダ）が本体を開発
+
+[^datafusion-doc]: _Polars is one of the fastest DataFrame libraries at the time of writing._  
+  <https://datafusion.apache.org/user-guide/faq.html>,  
+  2025-12-06閲覧
 
 :::
 
@@ -150,9 +154,7 @@ lang: ja
 ```
 
 <div style="text-align: right;">
-
 [2025-12-01に公開した記事より](https://zenn.dev/eitsupi/articles/r-polars-2025)
-
 </div>
 
 先んじてZennに記事を投稿済なので、そちらをご確認ください！
@@ -160,6 +162,8 @@ lang: ja
 # RでPolarsを使ってみる
 
 ---
+
+## Python Polars風構文
 
 :::: {.columns}
 
@@ -201,51 +205,264 @@ pl$DataFrame(
 . . .
 
 <div style="text-align: right;">
-
-何その構文！？
-
+何この構文！？
 </div>
 
-## Python Polarsを模倣する意味
+## Python Polars風構文
 
-# Base R S3メソッド
+::: {.incremental}
 
-# dplyr/tidyr S3メソッド
+- Rっぽくない
+- お手本通りに作るだけなので（？）開発しやすい（？）[^python-like]
+- PythonとRでほとんど同じ書き方をできて便利
+  - 例：[(Pretty) big data wrangling with DuckDB and Polars](https://github.com/grantmcdermott/duckdb-polars)
 
-## tidypolars
+[^python-like]: Rust側から自動生成されたRコードをもう一段階ラップしているため大変ではある。
 
-- dplyrバックエンド
-- 多数のパッケージの関数を、dplyr動詞内で使用可能にする
-  - 動詞内の関数を検出し、polarsの式に置き換える  
-    （dbplyrやarrowパッケージに類似）
+:::
+
+## Base R S3メソッド
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+```r
+df <- data.frame(
+  x = c(1, 2, 3),
+  y = c("a", "b", "c")
+)
+
+df["x"]
+```
+
+:::
+
+::: {.column width="50%"}
+
+```r
+library(polars)
+
+df <- data.frame(
+  x = c(1, 2, 3),
+  y = c("a", "b", "c")
+) |>
+  as_polars_df()
+
+df["x"]
+```
+
+:::
+
+::::
+
+::: {.incremental}
+
+- お馴染みの関数（の一部）を使える
+- Polarsの全機能にアクセスできるわけではない
+- 外部の関数で使用されることも想定される
+
+:::
+
+---
+
+## dplyr / tidyr S3メソッド
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+```r
+tibble::tibble(
+  x = c(1, 2, 3),
+  y = c("a", "b", "c"),
+) |>
+  dplyr::select(x)
+```
+
+:::
+
+::: {.column width="50%"}
+
+```r
+library(polars)
+library(tidypolars)
+
+tibble::tibble(
+  x = c(1, 2, 3),
+  y = c("a", "b", "c"),
+) |>
+  as_polars_df() |>
+  dplyr::select(x)
+```
+
+:::
+
+::::
+
+::: {.incremental}
+
+- tidypolarsパッケージによる提供
+- dbplyrやarrow等のように、dplyr動詞だけなく  
+  dplyr動詞内で評価される式の翻訳も行い、相当数の関数をサポート
+- できることに差があるので、duckplyrやdbplyr + duckdbと比較して  
+  使うのがオススメ
+
+:::
+
+## SQL
+
+```r
+library(polars)
+
+ctx <- pl$SQLContext(
+  dat =data.frame(
+    x = c(1, 2, 3),
+    y = c("a", "b", "c")
+  )
+)
+
+ctx$execute("SELECT x FROM dat")$collect()
+```
+
+::: {.incremental}
+
+- 地味にサポートされている
+- そこまで機能が充実しているわけではなく開発の優先度も低いので  
+  普通に考えるとduckdbの方が便利
+
+:::
 
 # 余談： インストール
 
 ## MSRV問題
 
-- R-multiverseを使いましょう
+- Minimum Supported Rust Version：ビルドに必要なRustバージョン
+- CRAN上で利用可能なRustは非常に古く、polarsをビルドできない  
+  → もちろんビルドできないためリリースもできない
+- R-multiverseを使おう
 
-## Windows arm64
+## MSRV問題
+
+```{r}
+#| echo: false
+#| fig-align: "center"
+# すべてのGitタグからJSONファイルのURLを生成
+json_urls <- gert::git_remote_ls(
+  remote = "https://github.com/eitsupi/cran-rust-version.git"
+) |>
+  duckplyr::as_duckdb_tibble() |>
+  dplyr::filter(
+    grepl("^refs/tags/", ref)
+  ) |>
+  dplyr::mutate(
+    url = paste0(
+      "https://raw.githubusercontent.com/eitsupi/cran-rust-version/",
+      ref,
+      "/output/versions.json"
+    ),
+    .keep = "none"
+  ) |>
+  dplyr::pull(url)
+
+# すべてのJSONファイルを読み込んで加工
+json_data <- duckplyr::read_json_duckdb(
+  json_urls,
+  options = list(filename = TRUE)
+) |>
+  dplyr::mutate(
+    date = dd$regexp_extract(filename, "[0-9]{4}-[0-9]{2}-[0-9]{2}")
+  ) |>
+  dplyr::mutate(date = as.Date(date)) |>
+  dplyr::select(!filename) |>
+  dplyr::group_by(date, flavor) |>
+  tidyr::fill(tidyselect::everything()) |>
+  dplyr::ungroup()
+
+rust_versions <- duckplyr::read_file_duckdb(
+  "https://raw.githubusercontent.com/rust-lang/rust/refs/heads/main/RELEASES.md",
+  "read_text"
+) |>
+  dplyr::mutate(
+    content = dd$regexp_split_to_table(content, "\n"),
+    .keep = "none"
+  ) |>
+  dplyr::filter(grepl("^Version", content)) |>
+  dplyr::mutate(
+    version = dd$regexp_extract(content, "(Version )(.+)\\s+(\\(.*\\))", 2L),
+    date = dd$regexp_extract(content, "([0-9]{4}-[0-9]{2}-[0-9]{2})"),
+    .keep = "none"
+  ) |>
+  dplyr::filter(grepl(".+", version)) |>
+  dplyr::mutate(date = as.Date(date)) |>
+  dplyr::filter(
+    suppressWarnings(smvr::as_smvr(version)) >= "1.70.0"
+  )
+
+json_data |>
+  dplyr::rename(version = rustc) |>
+  dplyr::union(dplyr::mutate(rust_versions, flavor = "rust")) |>
+  dplyr::mutate(
+    version = factor(
+      version,
+      levels = smvr::as_smvr(rust_versions$version) |> sort()
+    )
+  ) |>
+  dplyr::select(date, flavor, version) |>
+  ggplot2::ggplot(
+    ggplot2::aes(x = date, y = version, group = flavor, color = flavor)
+  ) +
+  ggplot2::geom_step() +
+  ggplot2::coord_cartesian(xlim = c(as.Date("2025-03-01"), NA)) +
+  ggplot2::scale_x_date(labels = scales::label_date(format = "%Y-%m-%d")) +
+  ggrepel::geom_text_repel(
+    ggplot2::aes(label = flavor),
+    data = \(d) dplyr::slice_max(d, order_by = date, by = flavor),
+    direction = "y",
+    nudge_x = 100,
+    segment.size = 0.2,
+    segment.alpha = 0.5
+  ) +
+  ggplot2::theme_minimal() +
+  ggplot2::guides(colour = "none", size = "none")
+```
+
+CRAN上のRustは半年以上1.81.0から動いていない。
+
+# 技術的な話
+
+## Arrow型対応
 
 ::: {.incremental}
 
-- 昨日[^pr1684]からarm64版Windowsにも対応
-  - 対応作業に時間をつかってしまい、  
-    この資料を作るための貴重な時間が失われた……
-  - バイナリパッケージ配布はR-universeにもないため、  
-    以下のように`NOT_CRAN="true"`を設定し  
-    自動バイナリダウンロードの有効化を推奨
-
-    ```r
-    Sys.setenv(NOT_CRAN = "true")
-    install.packages('polars', repos = c("https://rpolars.r-universe.dev", getOption("repos")))
-    ```
-
-[^pr1684]: <https://github.com/pola-rs/r-polars/pull/1684>
+- Apache Arrowの型の一部は、Base Rのベクトルで表現できない
+  - Null
+  - Time
+  - Binary
+- S3ベクトルを良い感じに定義できるvctrsパッケージおよび  
+  vctrsに基づいたいくつかのパッケージでかなり対応できる
+  - `vctrs::unspecified()`
+  - `hms::hms()`
+  - `blob::blob()`
 
 :::
 
-# 技術的な話
+## Arrow型対応
+
+日時型のパッケージとして最も表現力の高い（※私調べ）  
+clockパッケージをサポートしているのは現時点でpolarsのみ
+
+```r
+clock::naive_time_parse(
+  c(
+    NA,
+    "1900-01-01T12:34:56.123456789",
+    "2020-01-01T12:34:56.123456789"
+  ),
+  precision = "nanosecond"
+) |>
+  polars::as_polars_series()
+```
 
 ## mirai統合 / reticulate統合
 
@@ -253,13 +470,29 @@ pl$DataFrame(
   polarsオブジェクトを転送する
 - reticulate：Pythonにpolarsオブジェクトを転送する
 
-## S7採用
+. . .
 
-環境型にS3クラス属性を与えてメンバーを生やしたりしたもの
-（R6クラスに類似）
+- 計算能力の高いマシンにクエリを転送？
+- バックグラウンド実行？
+- Python Polarsにしかない関数の実行？
+
+## S7への移行
+
+新しくて単純なクラスのS7への移行から開始
+
+従来のpolarsオブジェクト：環境型にS3クラス属性を付けたもの
 
 ```r
+function(x, ...) {
+  self <- new.env(parent = emptyenv())
+  self$`_df` <- x
+
+  class(self) <- c("polars_data_frame", "polars_object")
+  self
+}
 ```
+
+. . .
 
 - 利点
   - 単純、依存関係なし
@@ -268,46 +501,70 @@ pl$DataFrame(
 
 ---
 
+## 環境型の限界
+
 ```{r}
 #| error: true
 plot(polars::as_polars_df(mtcars))
 ```
 
-↑のように謎のエラーが発生し、`plot()`関数を使えない。
+↑のように謎のエラーが発生し、`plot()`関数を使えない！
 
 . . .
 
-- 関数内で`is.environment()`による判定が行われており、`as.data.frame()`まで到達できない。
-  - arrowパッケージのクラスでも同じ（R6なので）。
+- 関数内で`is.environment()`による判定が行われており、`as.data.frame()`まで到達できない
+  - arrowパッケージのクラスでも同じ
 
 ---
 
 ## 多重ディスパッチ
 
-::: {.incremental}
+:::: {.columns}
 
-- 演算子
+::: {.column width="50%"}
 
-  ```r
-  s <- polars::as_polars_series(1L)
-  e <- polars::as_polars_expr(1L)
+演算子
 
-  s + 1 # 2 (Series)
-  e + 1 # 2 (Expr)
+```r
+s <- polars::as_polars_series(1L)
+e <- polars::as_polars_expr(1L)
 
-  s + e # エラー
-  e + s # エラー
-  ```
+s + 1 # 2 (Series)
+e + 1 # 2 (Expr)
 
-- 複雑な関数
-
-  ```r
-  df <- polars::as_polars_df(mtcars)
-
-  df[, 1]
-  df[1]
-  df[, "mpg"]
-  df["mpg"]
-  ```
+s + e # エラー
+e + s # エラー
+```
 
 :::
+
+::: {.column width="50%"}
+
+複雑な関数
+
+```r
+df <- polars::as_polars_df(mtcars)
+
+df[, 1]
+df[1]
+df[, "mpg"]
+df["mpg"]
+```
+
+:::
+
+::::
+
+. . .
+
+S7を採用することで良い感じに書けるようになりそう
+
+---
+
+## まとめ
+
+今日はPolarsという名前だけでも覚えて帰ってください
+
+. . .
+
+ついでに気軽にインストールして試してみてください！
