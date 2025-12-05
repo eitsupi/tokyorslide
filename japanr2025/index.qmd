@@ -139,4 +139,20 @@ pl$DataFrame(
 
 ## tidypolars
 
+- dplyrバックエンド
+- 多数のパッケージの関数を、dplyr動詞内で使用可能にする
+  - 動詞内の関数を検出し、polarsの式に置き換える（arrowパッケージに類似）
 
+# 技術的な話
+
+## mirai統合
+
+パッケージ読み込み時に
+
+## reticulate統合
+
+パッケージ読み込み時に`reticulate::r_to_py()`の
+S3メソッドを追加
+→
+
+## S7採用
