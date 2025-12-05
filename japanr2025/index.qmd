@@ -11,7 +11,7 @@ format:
     chalkboard: false
     preview-links: auto
     footer: "#Japan.R 2025"
-    embed-resources: true
+    # embed-resources: true
     reference-location: document
 execute:
   cache: true
@@ -54,7 +54,9 @@ lang: ja
 
 Polars Rパッケージの紹介もしていました。
 
-# 本日話すこと
+---
+
+## 本日話すこと
 
 ::: {.incremental}
 
@@ -62,12 +64,15 @@ Polars Rパッケージの紹介もしていました。
   - Python Polars風構文
   - dplyrバックエンド
 - 技術的な話
+  - nanoarrowエコシステム
   - mirai/reticulate統合
   - S7
 
 :::
 
 # Polarsについて
+
+---
 
 ## Polars
 
@@ -82,11 +87,38 @@ Polars Rパッケージの紹介もしていました。
 
 :::
 
+---
+
+## （ここに良い感じのベンチマーク結果が入る）
+
+. . .
+
+```{.default .center}
+#> # A tibble: 7 × 6
+#>   expression             min   median `itr/sec` mem_alloc `gc/sec`
+#>   <bch:expr>        <bch:tm> <bch:tm>     <dbl> <bch:byt>    <dbl>
+#> 1 acero_dplyr        149.7ms  156.1ms      6.25   41.83MB     0
+#> 2 duckdb_dbplyr      109.4ms  113.7ms      8.35   24.18MB     2.09
+#> 3 duckdb_duckplyr     62.8ms   69.1ms     14.4     3.71MB     0
+#> 4 duckdb              59.6ms   61.5ms     14.9      4.9KB     0
+#> 5 sedonadb            56.8ms   73.1ms     13.6      6.7MB     0
+#> 6 polars_tidypolars   62.4ms   67.2ms     13.5    13.15MB     2.26
+#> 7 polars                50ms   53.2ms     18.8    99.51KB     0
+```
+
+<div style="text-align: right;">
+[2025-12-01に公開した記事より](https://zenn.dev/eitsupi/articles/r-polars-2025)
+</div>
+
 # RでPolarsを使ってみる
+
+---
 
 :::: {.columns}
 
 ::: {.column width="50%"}
+
+### Python
 
 ```python
 import polars as pl
@@ -103,6 +135,8 @@ pl.DataFrame(
 :::
 
 ::: {.column width="50%"}
+
+### R
 
 ```r
 library(polars)
@@ -156,3 +190,60 @@ S3メソッドを追加
 →
 
 ## S7採用
+
+環境型にS3クラス属性を与えてメンバーを生やしたりしたもの
+（R6クラスに類似）
+
+```r
+```
+
+- 利点
+  - 単純、依存関係なし
+- 欠点
+  - `is.environment()`が`TRUE`になる
+
+---
+
+```{r}
+#| error: true
+plot(polars::as_polars_df(mtcars))
+```
+
+↑のように謎のエラーが発生し、`plot()`関数を使えない。
+
+. . .
+
+- 関数内で`is.environment()`による判定が行われており、`as.data.frame()`まで到達できない。
+  - arrowパッケージのクラスでも同じ（R6なので）。
+
+---
+
+## 多重ディスパッチ
+
+::: {.incremental}
+
+- 演算子
+
+  ```r
+  s <- polars::as_polars_series(1L)
+  e <- polars::as_polars_expr(1L)
+
+  s + 1 # 2 (Series)
+  e + 1 # 2 (Expr)
+
+  s + e # エラー
+  e + s # エラー
+  ```
+
+- 複雑な関数
+
+  ```r
+  df <- polars::as_polars_df(mtcars)
+
+  df[, 1]
+  df[1]
+  df[, "mpg"]
+  df["mpg"]
+  ```
+
+:::
