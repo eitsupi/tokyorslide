@@ -1,0 +1,14 @@
+Package: japanr2025-slide
+Version: 0.0.0.9000
+Imports:
+    arrow,
+    bench,
+    clock,
+    duckplyr,
+    gert,
+    ggbeeswarm,
+    ggplot2,
+    ggrepel,
+    polars,
+    smvr,
+    tidypolars
