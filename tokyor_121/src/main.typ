@@ -22,7 +22,7 @@
   ),
 )
 
-#set text(size: 22pt)
+#set text(size: 24pt)
 
 #include "sections/intro.typ"
 #include "sections/arf.typ"

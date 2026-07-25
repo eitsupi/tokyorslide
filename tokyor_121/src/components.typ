@@ -146,13 +146,13 @@
 )
 
 #let flow-node(title, subtitle: none, color: accent) = block(
-  width: 100%, fill: paper, radius: 8pt, inset: (x: 0.55em, y: 0.45em),
+  width: 100%, fill: paper, radius: 8pt, inset: (x: 0.55em, y: 0.35em),
   stroke: 1.2pt + color,
   align(center, [
     #text(size: 0.7em, weight: "bold", fill: ink, title)
     #if subtitle != none {
       v(0.15em)
-      text(size: 0.48em, fill: muted, subtitle)
+      text(size: 0.44em, fill: muted, subtitle)
     }
   ]),
 )
@@ -163,10 +163,10 @@
   for (i, node) in values.enumerate() {
     parts.push(node)
     if i < values.len() - 1 {
-      parts.push(align(center, text(size: 1.0em, weight: "bold", fill: accent, [↓])))
+      parts.push(align(center, text(size: 0.85em, weight: "bold", fill: accent, [↓])))
     }
   }
-  stack(dir: ttb, spacing: 0.25em, ..parts)
+  stack(dir: ttb, spacing: 0.16em, ..parts)
 }
 
 #let takeaway(number, title, body) = grid(
@@ -184,6 +184,6 @@
 
 #let centered-body(body) = block(
   width: 100%,
-  height: 15.5em,
+  height: 14.25em,
   align(left + horizon, body),
 )

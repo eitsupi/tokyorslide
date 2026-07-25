@@ -10,7 +10,7 @@
       #text(size: 0.9em, weight: "bold", [httpgd])
       #v(0.5em)
       #feature-list(
-        [C++製の描画処理とHTTPサーバーをRパッケージに同梱],
+        [C++製の描画処理・HTTPサーバーを同梱],
         [環境によってはソースビルドが大変],
       )
     ],
@@ -23,13 +23,15 @@
         [Grant氏がjgdを公開した際に衝撃を受け、「これだ！」と思い開発に参加],
       )
     ],
+    ratio: (0.9fr, 1.1fr),
+    gutter: 1em,
   )
 ]
 
 #section-title([], [機能紹介], subtitle: [jgd])
 
 #slide(title: [動作例])[
-  #align(center, image("/tokyor_121/src/images/jgd.png", width: 93%))
+  #align(center, image("/tokyor_121/src/images/jgd.png", width: 90%))
   #v(0.25em)
   #align(center, text(size: 0.52em, fill: muted, [画像は開発途中のターミナルグラフィックス対応レンダラー（未公開）]))
 ]
@@ -54,7 +56,8 @@
         )
       ])
     ],
-    ratio: (0.9fr, 1.1fr),
+    ratio: (0.78fr, 1.22fr),
+    gutter: 1em,
   )
 ]
 
