@@ -21,11 +21,12 @@
       #text(size: 1.05em, weight: "bold", [\@eitsupi])
       #v(0.35em)
       #feature-list(
-        [本業：手料理サブスク つくりおき.jp のデータ基盤周り（dbt）],
-        [副業：Columnar社でADBC周りのお手伝い（業務委託）],
-        [Excelが嫌になりRを使い始めて6年以上],
+        [本業：手料理サブスク Tsuklio のデータ周り],
+        [副業：Columnar社でApache Arrow ADBC周りの開発],
+        [Excelが嫌になりRを使い始めて7年],
         [Rockerプロジェクト（Shell、R、Docker）],
         [Polars Rパッケージ（R、Rust）],
+        [最近はarfの人、後述],
       )
     ],
     ratio: (0.30fr, 0.70fr),
@@ -75,7 +76,7 @@
 
 #slide(title: [ツール間のつながり], align: left + horizon)[
   #align(horizon, [
-    #text(size: 0.78em, [arf、rd2qmd、jgdは関係していないように見えます。開発を進めるにつれてつながってきたのが面白かったです。])
+    #text(size: 0.78em, [arf、rd2qmd、jgdはそれぞれ無関係に始めたが、意外とそれぞれが関連して活きた])
     #v(1.0em)
     #grid(
       columns: (0.28fr, auto, 0.58fr),

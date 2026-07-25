@@ -10,7 +10,7 @@
     #v(0.7em)
     #feature-list(
       [radianを何年も使っていたが、Python製なのが嫌だった],
-      [「ArkとNushellを組み合わせればできるのでは？」というところから開始],
+      [「ArkとNushellを組み合わせればできるのでは？」というところから開始、 \ なのでRust製],
     )
   ]
 ]
@@ -18,7 +18,7 @@
 #slide(title: [インストール])[
   #two-columns(
     [
-      #text(size: 0.78em, [シングルバイナリなので、GitHubからダウンロードするかパッケージマネージャーでインストールできます。])
+      #text(size: 0.78em, [GitHubからダウンロードするか \ パッケージマネージャーで。])
       #v(0.8em)
       #text(size: 0.62em, weight: "bold", [Windows])
       #v(0.2em)
@@ -40,7 +40,7 @@
   #image-with-note(
     "/tokyor_121/src/images/arf-2.png",
     [
-      #text(size: 0.95em, weight: "bold", [:switch])
+      #text(size: 0.95em, weight: "bold", [:switch メタコマンド])
       #v(0.45em)
       #text(size: 0.68em, [rigと連携してRのバージョンを切り替え])
     ],
@@ -55,24 +55,22 @@
       #v(0.35em)
       #feature-list(
         [fish風の履歴補完],
-        [通常のRやradianから履歴を取り込み可能],
-        [Ctrl+Rで履歴をあいまい検索],
+        [Ctrl+Rや履歴ブラウザで \ 履歴をあいまい検索],
+        [通常のRやradianから \ 履歴を取り込み可能],
       )
-      #v(0.35em)
-      #text(size: 0.52em, fill: muted, [履歴検索とHelp Browserはどちらもあいまい検索に対応])
     ],
     ratio: (1.45fr, 0.85fr),
   )
 ]
 
-#slide(title: [Help Browser])[
-  #text(size: 0.65em, [Atusy氏が作成したfelpパッケージから着想を得ました。])
+#slide(title: [Helpブラウザ])[
+  #text(size: 0.65em, [Atusy氏のfelpパッケージを参考にした機能。ターミナル内でヘルプページを高速検索])
   #v(0.55em)
   #two-columns(
     [
       #framed-image("/tokyor_121/src/images/arf-4.png")
       #v(0.3em)
-      #align(center, text(size: 0.5em, fill: muted, [全パッケージをあいまい検索]))
+      #align(center, text(size: 0.5em, fill: muted, [インストール済パッケージをあいまい検索]))
     ],
     [
       #framed-image("/tokyor_121/src/images/arf-6.png")
@@ -94,6 +92,8 @@
         [コードの評価],
         [端末なしで起動],
       )
+      #v(0.5em)
+      #text(size: 0.65em, [IDE / AI連携を想定])
     ],
     ratio: (1.6fr, 0.7fr),
   )

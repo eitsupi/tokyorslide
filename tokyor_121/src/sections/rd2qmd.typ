@@ -6,10 +6,9 @@
 
 #slide(title: [着想], align: left + horizon)[
   #feature-list(
-    [r-polarsのウェブサイトはaltdocで作っています],
-    [RdからMarkdownへの変換が不正確なため、表示を直したかった],
-    [Rdを正確にMarkdownへ変換する決定的な実装が見つからなかった],
-    [Rustはファイル解析が得意そうなので、試しに作り始めました],
+    [r-polarsのウェブサイトで使っているaltdocのRdからmdへの変換が \ 不正確なため、表示を直したかった],
+    [Rdを正確にMarkdownへ変換する決定的な実装は見つからず],
+    [Rustはこの手の処理に向いているっぽいので、試しに作ってみた],
   )
 ]
 

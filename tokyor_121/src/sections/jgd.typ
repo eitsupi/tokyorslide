@@ -10,8 +10,9 @@
       #text(size: 0.9em, weight: "bold", [httpgd])
       #v(0.5em)
       #feature-list(
-        [C++製の描画処理・HTTPサーバーを同梱],
-        [環境によってはソースビルドが大変],
+        [vscode上でRを使う定番],
+        [C++製の描画処理・ \ HTTPサーバーを同梱],
+        [ビルド大変、CRANから度々削除],
       )
     ],
     [
@@ -19,13 +20,15 @@
       #v(0.5em)
       #feature-list(
         [Rパッケージ側はC製・外部依存なし],
-        [描画命令をJSONに変換して外部サーバーへ送信],
-        [Grant氏がjgdを公開した際に衝撃を受け、「これだ！」と思い開発に参加],
+        [描画命令をJSONに変換し \ 外部サーバーへ送信],
+        [JSONの解釈は外部サーバー側の責務]
       )
     ],
     ratio: (0.9fr, 1.1fr),
     gutter: 1em,
   )
+  #v(0.5em)
+  #text([Grant氏がjgdを公開した際に、「これだ！」と開発に参加])
 ]
 
 #section-title([], [機能紹介], subtitle: [jgd])
@@ -33,7 +36,7 @@
 #slide(title: [動作例])[
   #align(center, image("/tokyor_121/src/images/jgd.png", width: 90%))
   #v(0.25em)
-  #align(center, text(size: 0.52em, fill: muted, [画像は開発途中のターミナルグラフィックス対応レンダラー（未公開）]))
+  #align(center, text(size: 0.52em, fill: muted, [画像は開発途中のターミナルグラフィックス対応レンダラー（未公開・飽きて放置中）]))
 ]
 
 #slide(title: [アーキテクチャ])[
@@ -65,10 +68,10 @@
   #two-columns(
     [
       #feature-list(
-        [VS Code R Extension],
+        [vscode-r バージョン3],
         [Deno製のブラウザー向けサーバー],
-        [JSONを扱えれば他のクライアントも実装可能],
         [リサイズやplot historyにも対応],
+        [jgdパッケージ内の仕様書に沿って \ サーバー開発可能],
       )
     ],
     [
