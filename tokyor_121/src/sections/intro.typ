@@ -43,7 +43,7 @@
       align: horizon,
       text(size: 1.1em, weight: "bold", fill: muted, [2025]),
       [
-        #text(size: 1.1em, weight: "bold", [r-polarsを書いていた])
+        #text(size: 1.1em, weight: "bold", [r-polarsの開発])
         #v(0.2em)
         #text(size: 0.66em, fill: muted, [Japan.R 2025で発表])
       ],
@@ -52,6 +52,8 @@
         #text(size: 1.1em, weight: "bold", [エージェンティックコーディングに移行])
         #v(0.2em)
         #text(size: 0.66em, fill: muted, [これまで手を出せなかったツール群を作成])
+        #v(0em)
+        #text(size: 0.66em, fill: muted, [このスライドもCodex CLIにTypstで作らせた])
       ],
     )
   ])
@@ -88,7 +90,7 @@
       text(size: 0.72em, [arfの内蔵Help Browser]),
       text(size: 0.9em, weight: "bold", [arfのIPC・Headless]),
       text(size: 1.0em, fill: accent, [→]),
-      text(size: 0.72em, [jgdのE2Eテスト]),
+      text(size: 0.72em, [jgdのAIエージェントによるバグ潰し・E2Eテスト]),
     )
   ])
 ]
