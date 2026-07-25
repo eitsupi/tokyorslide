@@ -2,101 +2,88 @@
 #import "../components.typ": *
 #import "@preview/touying:0.7.4": *
 
-#section-title([01], [arf], subtitle: [radianを置き換える、Rust製Rコンソール])
+#section-title([01], [arf], subtitle: [Rust製のRコンソール])
 
-#slide(title: [なぜ、新しいRコンソール？])[
-  #two-columns(
-    [
-      #text(size: 1.25em, weight: "bold", fill: ink, [radianは好き。\ でも…])
-      #v(0.7em)
-      #feature-list(
-        [Python環境に依存する],
-        [Rの切替や配布を、もっと単純にしたい],
-        [外部ツールからRセッションを操作したい],
-      )
-    ],
-    [
-      #quote([欲しかったのは、インストールしてすぐ使えるR frontend])
-      #v(0.75em)
-      #grid(
-        columns: (1fr, 1fr), gutter: 0.55em,
-        metric([1], [single binary]), metric([3], [major OS]),
-      )
-    ],
-    ratio: (1.1fr, 0.9fr),
+#slide(title: [着想])[
+  #text(size: 1.0em, weight: "bold", [radianを置き換えたい])
+  #v(0.7em)
+  #feature-list(
+    [radianを何年も使っていたが、Python製なのが嫌だった],
+    [「ArkとNushellを組み合わせればできるのでは？」というところから開始],
   )
 ]
 
-#slide(title: [まず、普段使えること])[
+#slide(title: [Rバージョン切り替え])[
   #image-with-note(
     "/tokyor_121/src/images/arf-2.png",
     [
-      #pill([:switch])
-      #v(0.5em)
-      #text(size: 0.95em, weight: "bold", fill: ink, [その場でRを切り替える])
+      #text(size: 0.95em, weight: "bold", [:switch])
       #v(0.45em)
-      #text(size: 0.64em, fill: muted, [rigと連携。\ 再起動までarfの中で完結。])
+      #text(size: 0.68em, [rigと連携してRのバージョンを切り替え])
     ],
   )
 ]
 
-#slide(title: [履歴は「あいまいに」探す])[
+#slide(title: [履歴検索])[
   #image-with-note(
     "/tokyor_121/src/images/arf-3.png",
     [
-      #pill([Ctrl + R])
-      #v(0.5em)
-      #text(size: 0.95em, weight: "bold", fill: ink, [前に書いたコードをすぐ戻す])
+      #text(size: 0.95em, weight: "bold", [Ctrl + R])
       #v(0.45em)
-      #text(size: 0.64em, fill: muted, [通常のRやradianの履歴も取り込み可能。])
+      #text(size: 0.68em, [あいまい検索可能な履歴機能])
+      #v(0.35em)
+      #text(size: 0.58em, fill: muted, [通常のRやradianの履歴も取り込み可能])
     ],
   )
 ]
 
-#slide(title: [Help Browserをコンソールの中に])[
+#slide(title: [Help Browser])[
   #two-columns(
     [
-      #framed-image("/tokyor_121/src/images/arf-4.png", height: 9.4em)
+      #framed-image("/tokyor_121/src/images/arf-4.png")
       #v(0.35em)
-      #align(center, text(size: 0.54em, fill: muted, [:help で全パッケージをあいまい検索]))
+      #align(center, text(size: 0.54em, fill: muted, [全パッケージをあいまい検索]))
     ],
     [
-      #framed-image("/tokyor_121/src/images/arf-6.png", height: 9.4em)
+      #framed-image("/tokyor_121/src/images/arf-6.png")
       #v(0.35em)
-      #align(center, text(size: 0.54em, fill: muted, [RdをMarkdownとして読みやすく表示]))
+      #align(center, text(size: 0.54em, fill: muted, [RdをMarkdownに変換して表示]))
     ],
     gutter: 0.85em,
   )
 ]
 
-#slide(title: [端末の外から、Rを動かす])[
+#slide(title: [IPC・Headless])[
   #image-with-note(
     "/tokyor_121/src/images/arf-5.png",
     [
-      #pill([IPC + Headless])
+      #text(size: 0.9em, weight: "bold", [外部からRセッションを操作])
       #v(0.5em)
-      #text(size: 0.95em, weight: "bold", fill: ink, [同じRセッションへ送る・評価する])
-      #v(0.5em)
-      #feature-list([IDEとの統合], [CIでの実行], [E2Eテストの自動化])
+      #feature-list(
+        [コマンド送信],
+        [コードの評価],
+        [端末なしで起動],
+      )
     ],
     ratio: (1.6fr, 0.7fr),
   )
 ]
 
-#slide(title: [配布はシングルバイナリ])[
+#slide(title: [インストール])[
   #two-columns(
     [
-      #text(size: 1.05em, weight: "bold", fill: ink, [使い始めるまでを短く])
-      #v(0.75em)
-      #feature-card([Windows], body: [#raw("winget install --id eitsupi.arf")])
-      #v(0.5em)
-      #feature-card([macOS / Linux], body: [#raw("brew install arf")])
+      #text(size: 0.78em, [シングルバイナリなので、GitHubからダウンロードするかパッケージマネージャーでインストールできます。])
+      #v(0.8em)
+      #text(size: 0.62em, weight: "bold", [Windows])
+      #v(0.2em)
+      #raw(block: true, lang: "sh", "winget install --id eitsupi.arf")
+      #v(0.55em)
+      #text(size: 0.62em, weight: "bold", [macOS / Linux])
+      #v(0.2em)
+      #raw(block: true, lang: "sh", "brew install arf")
     ],
-    [
-      #framed-image("/tokyor_121/src/images/arf-1.png", height: 9.0em)
-      #v(0.45em)
-      #align(center, pill([Rust · no runtime dependency]))
-    ],
-    ratio: (0.85fr, 1.15fr),
+    [#framed-image("/tokyor_121/src/images/arf-1.png")],
+    ratio: (0.9fr, 1.1fr),
+    align: horizon,
   )
 ]

@@ -2,29 +2,14 @@
 #import "../components.typ": *
 #import "@preview/touying:0.7.4": *
 
-#section-title([02], [rd2qmd], subtitle: [Rdを、サイトで使えるMarkdownへ])
+#section-title([02], [rd2qmd], subtitle: [RdファイルをMarkdown・Quartoに変換])
 
-#slide(title: [Rd → Markdown を、ちゃんと変換したい])[
-  #two-columns(
-    [
-      #text(size: 1.12em, weight: "bold", fill: ink, [困っていたこと])
-      #v(0.65em)
-      #feature-list(
-        [r-polarsのサイト生成で変換結果が崩れる],
-        [リンク解決や引数表の扱いが不正確],
-        [決定的に使える実装が見つからない],
-      )
-    ],
-    [
-      #quote([Rを起動せず、パッケージ単位で速く正確に変換する])
-      #v(0.8em)
-      #grid(
-        columns: (1fr, 1fr), gutter: 0.55em,
-        metric([Rust], [single binary], color: warm),
-        metric([qmd], [Quarto ready], color: warm),
-      )
-    ],
-    ratio: (1.1fr, 0.9fr),
+#slide(title: [着想])[
+  #feature-list(
+    [r-polarsのウェブサイトはaltdocで作っています],
+    [RdからMarkdownへの変換が不正確なため、表示を直したかった],
+    [Rdを正確にMarkdownへ変換する決定的な実装が見つからなかった],
+    [Rustはファイル解析が得意そうなので、試しに作り始めました],
   )
 ]
 
@@ -67,7 +52,7 @@ simple(x, y = 1)
   )
 ]
 
-#slide(title: [パッケージ単位で変換する])[
+#slide(title: [使い方])[
   #two-columns(
     [
       #code-panel[
@@ -83,33 +68,35 @@ rd2qmd convert man/ -o docs/ -j4
       ]
     ],
     [
-      #takeaway([1], [リンクを解決], [同一パッケージ内と外部パッケージを区別])
-      #v(0.75em)
-      #takeaway([2], [索引も生成], [topic・alias・lifecycleをJSONへ])
-      #v(0.75em)
-      #takeaway([3], [Rは不要], [CLI単体で変換パイプラインに組み込める])
+      #feature-list(
+        [単体のRdファイルまたはパッケージ全体を変換],
+        [パッケージ内・外のリンクを解決],
+        [topic indexをJSONで生成],
+        [Rのインストールは不要],
+      )
     ],
     ratio: (1.05fr, 0.95fr),
+    align: horizon,
   )
 ]
 
-#slide(title: [変換器が、Help Browserになった])[
+#slide(title: [arfへの組み込み])[
   #grid(
     columns: (1fr, auto, 1fr),
-    column-gutter: 1.25em,
+    column-gutter: 1.1em,
     align: horizon,
     [
-      #text(size: 1.05em, weight: "bold", fill: ink, [rd2qmd])
+      #text(size: 1.05em, weight: "bold", [rd2qmd])
       #v(0.35em)
-      #text(size: 0.65em, fill: muted, [Rdを構造化して\ Markdownへ変換])
+      #text(size: 0.68em, fill: muted, [RdをMarkdownへ変換])
     ],
-    [#text(size: 2.0em, weight: "bold", fill: accent, [→])],
+    [#text(size: 1.4em, fill: accent, [→])],
     [
-      #text(size: 1.05em, weight: "bold", fill: ink, [arf])
+      #text(size: 1.05em, weight: "bold", [arf Help Browser])
       #v(0.35em)
-      #text(size: 0.65em, fill: muted, [インストール済みパッケージの\ ヘルプを端末で表示])
+      #text(size: 0.68em, fill: muted, [パッケージのヘルプを端末に表示])
     ],
   )
-  #v(1.05em)
-  #quote([単体ツールとして作った変換処理が、別の体験を支えた])
+  #v(1.0em)
+  #text(size: 0.72em, [rd2qmdの変換処理を使って、arfにHelp Browserを実装できました。])
 ]

@@ -26,21 +26,11 @@
   footer: none,
   align: left + horizon,
 )[
-  #grid(
-    columns: (0.11fr, 0.89fr),
-    column-gutter: 1.2em,
-    align: horizon,
-    [#text(size: 3.3em, weight: "bold", fill: line-color, index)],
-    [
-      #rect(width: 3.2em, height: 5pt, radius: 3pt, fill: accent)
-      #v(0.75em)
-      #text(size: 2.15em, weight: "bold", fill: ink, title)
-      #if subtitle != none {
-        v(0.6em)
-        text(size: 0.82em, fill: muted, subtitle)
-      }
-    ],
-  )
+  #text(size: 2.5em, weight: "bold", fill: ink, title)
+  #if subtitle != none {
+    v(0.7em)
+    text(size: 0.85em, fill: muted, subtitle)
+  }
 ]
 
 #let two-columns(left, right, ratio: (1fr, 1fr), gutter: 1.25em, align: top) = grid(
@@ -76,15 +66,20 @@
   list(..items.pos().map(item => [#item]))
 }
 
-#let framed-image(source, height: 100%, fit: "contain", radius: 9pt) = block(
-  width: 100%,
-  height: height,
-  fill: rgb("#111315"),
-  radius: radius,
-  clip: true,
-  stroke: 0.8pt + line-color,
-  image(source, width: 100%, height: 100%, fit: fit),
-)
+#let framed-image(source, height: auto, fit: "contain", radius: 5pt) = {
+  let visual = if height == auto {
+    image(source, width: 100%)
+  } else {
+    image(source, width: 100%, height: height, fit: fit)
+  }
+  block(
+    width: 100%,
+    radius: radius,
+    clip: true,
+    stroke: 0.8pt + line-color,
+    visual,
+  )
+}
 
 #let hero-image(source, caption: none, height: 5.25em) = {
   framed-image(source, height: height, fit: "contain")
@@ -94,10 +89,10 @@
   }
 }
 
-#let full-image(source, height: 100%, fit: "contain") = framed-image(source, height: height, fit: fit)
+#let full-image(source, height: auto, fit: "contain") = framed-image(source, height: height, fit: fit)
 
 #let image-with-note(source, note, side: "right", ratio: (1.55fr, 0.75fr)) = {
-  let visual = framed-image(source, height: 10.7em)
+  let visual = framed-image(source)
   let copy = align(horizon, note)
   if side == "right" {
     two-columns(visual, copy, ratio: ratio)
