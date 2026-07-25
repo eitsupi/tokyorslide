@@ -184,6 +184,6 @@
 
 #let centered-body(body) = block(
   width: 100%,
-  height: 17em,
+  height: 15.5em,
   align(left + horizon, body),
 )

@@ -22,6 +22,8 @@
   ),
 )
 
+#set text(size: 22pt)
+
 #include "sections/intro.typ"
 #include "sections/arf.typ"
 #include "sections/rd2qmd.typ"

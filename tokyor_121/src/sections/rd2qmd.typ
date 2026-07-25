@@ -13,6 +13,8 @@
   )
 ]
 
+#section-title([], [機能紹介], subtitle: [rd2qmd])
+
 #slide(title: [変換前 / 変換後])[
   #before-after(
     before-title: [Rd],

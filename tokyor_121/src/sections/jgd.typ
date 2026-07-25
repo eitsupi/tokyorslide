@@ -4,10 +4,6 @@
 
 #section-title([03], [jgd], subtitle: [JSONを出力するRグラフィックデバイス])
 
-#slide(title: [動作例])[
-  #full-image("/tokyor_121/src/images/jgd.png")
-]
-
 #slide(title: [着想], align: left + horizon)[
   #two-columns(
     [
@@ -24,10 +20,18 @@
       #feature-list(
         [Rパッケージ側はC製・外部依存なし],
         [描画命令をJSONに変換して外部サーバーへ送信],
-        [Grantの発表後、仕様検討や機能追加に参加],
+        [Grant氏がjgdを公開した際に衝撃を受け、「これだ！」と思い開発に参加],
       )
     ],
   )
+]
+
+#section-title([], [機能紹介], subtitle: [jgd])
+
+#slide(title: [動作例])[
+  #align(center, image("/tokyor_121/src/images/jgd.png", width: 93%))
+  #v(0.25em)
+  #align(center, text(size: 0.52em, fill: muted, [画像は開発途中のターミナルグラフィックス対応レンダラー（未公開）]))
 ]
 
 #slide(title: [アーキテクチャ])[
