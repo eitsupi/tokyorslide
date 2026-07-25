@@ -33,7 +33,7 @@
   )
 ]
 
-#slide(title: [最近やってたこと])[
+#slide(title: [最近やってたこと], align: left + horizon)[
   #align(horizon, [
     #grid(
       columns: (0.18fr, 0.82fr),
@@ -56,7 +56,7 @@
   ])
 ]
 
-#slide(title: [最近作ったツール])[
+#slide(title: [最近作ったツール], align: left + horizon)[
   #align(horizon, [
     #grid(
       columns: (0.23fr, 0.77fr),
@@ -73,9 +73,8 @@
   ])
 ]
 
-#slide(title: [開発を進めるにつれてつながってきた])[
+#slide(title: [ツール間のつながり], align: left + horizon)[
   #align(horizon, [
-    #v(2.0em)
     #text(size: 0.78em, [arf、rd2qmd、jgdは関係していないように見えます。開発を進めるにつれてつながってきたのが面白かったです。])
     #v(1.0em)
     #grid(

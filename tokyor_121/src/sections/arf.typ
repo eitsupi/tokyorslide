@@ -5,12 +5,14 @@
 #section-title([01], [arf], subtitle: [Rust製のRコンソール])
 
 #slide(title: [着想])[
-  #text(size: 1.0em, weight: "bold", [radianを置き換えたい])
+  #centered-body[
+    #text(size: 1.0em, weight: "bold", [radianを置き換えたい])
   #v(0.7em)
   #feature-list(
     [radianを何年も使っていたが、Python製なのが嫌だった],
     [「ArkとNushellを組み合わせればできるのでは？」というところから開始],
   )
+  ]
 ]
 
 #slide(title: [Rバージョン切り替え])[

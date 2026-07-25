@@ -8,7 +8,7 @@
   #full-image("/tokyor_121/src/images/jgd.png")
 ]
 
-#slide(title: [着想])[
+#slide(title: [着想], align: left + horizon)[
   #two-columns(
     [
       #text(size: 0.9em, weight: "bold", [httpgd])
@@ -54,7 +54,7 @@
   )
 ]
 
-#slide(title: [Renderer])[
+#slide(title: [Renderer], align: left + horizon)[
   #two-columns(
     [
       #feature-list(
@@ -78,7 +78,7 @@ plot(cars)
   )
 ]
 
-#slide(title: [jgdのテスト])[
+#slide(title: [jgdのテスト], align: left + horizon)[
   #grid(
     columns: (1fr, auto, 1fr, auto, 1fr),
     column-gutter: 0.45em,

@@ -4,7 +4,7 @@
 
 #section-title([02], [rd2qmd], subtitle: [RdファイルをMarkdown・Quartoに変換])
 
-#slide(title: [着想])[
+#slide(title: [着想], align: left + horizon)[
   #feature-list(
     [r-polarsのウェブサイトはaltdocで作っています],
     [RdからMarkdownへの変換が不正確なため、表示を直したかった],
@@ -80,7 +80,7 @@ rd2qmd convert man/ -o docs/ -j4
   )
 ]
 
-#slide(title: [arfへの組み込み])[
+#slide(title: [arfへの組み込み], align: left + horizon)[
   #grid(
     columns: (1fr, auto, 1fr),
     column-gutter: 1.1em,

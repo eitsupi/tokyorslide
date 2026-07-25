@@ -181,3 +181,9 @@
     #text(size: 0.6em, fill: muted, body)
   ],
 )
+
+#let centered-body(body) = block(
+  width: 100%,
+  height: 17em,
+  align(left + horizon, body),
+)

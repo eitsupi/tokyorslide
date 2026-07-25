@@ -16,10 +16,10 @@
       columns: (auto, 1fr),
       column-gutter: 0.65em,
       align: horizon,
-      rect(width: 5pt, height: 1.2em, radius: 3pt, fill: accent),
-      text(size: 1.12em, weight: "bold", fill: ink, self.store.title),
+      rect(width: 5pt, height: 1.5em, radius: 3pt, fill: accent),
+      text(size: 1.4em, weight: "bold", fill: ink, self.store.title),
     )
-    v(0.35em)
+    v(0.28em)
     line(length: 100%, stroke: 0.8pt + line-color)
   }
 }

@@ -4,7 +4,7 @@
 
 #section-title([04], [まとめ])
 
-#slide(title: [まとめ])[
+#slide(title: [まとめ], align: left + horizon)[
   #feature-list(
     [arf：Rust製のRコンソール],
     [rd2qmd：RdからMarkdown・Quartoへの変換],
