@@ -88,7 +88,7 @@ plot(cars)
   )
 ]
 
-#slide(title: [jgdのE2Eテスト])[
+#slide(title: [jgdの動作確認・E2Eテスト])[
   #grid(
     columns: (1fr, auto, 1.15fr, auto, 1.1fr),
     column-gutter: 0.4em,
@@ -102,6 +102,6 @@ plot(cars)
   #v(1.0em)
   #feature-list(
     [ブラウザをリサイズ → Rでプロット関数を実行 → 再描画を確認],
-    [コーディングエージェントがRとブラウザの両方を操作・観測でき、開発・デバッグが効率化],
+    [コーディングエージェントがRとブラウザの両方を操作・観測でき、 \ 開発・デバッグが効率化],
   )
 ]
