@@ -88,17 +88,20 @@ plot(cars)
   )
 ]
 
-#slide(title: [jgdのテスト], align: left + horizon)[
+#slide(title: [jgdのE2Eテスト])[
   #grid(
-    columns: (1fr, auto, 1fr, auto, 1fr),
-    column-gutter: 0.45em,
+    columns: (1fr, auto, 1.15fr, auto, 1.1fr),
+    column-gutter: 0.4em,
     align: horizon,
-    [#text(size: 0.82em, weight: "bold", [arf headless]) #v(0.2em) #text(size: 0.58em, fill: muted, [端末なしでRを起動])],
+    [#text(size: 0.78em, weight: "bold", [headless arf]) #v(0.2em) #text(size: 0.55em, fill: muted, [Rの起動・コード実行])],
     text(size: 1.0em, fill: accent, [→]),
-    [#text(size: 0.82em, weight: "bold", [IPC eval]) #v(0.2em) #text(size: 0.58em, fill: muted, [描画コードを送信])],
+    [#text(size: 0.78em, weight: "bold", [jgd / Renderer]) #v(0.2em) #text(size: 0.55em, fill: muted, [描画命令を連携])],
     text(size: 1.0em, fill: accent, [→]),
-    [#text(size: 0.82em, weight: "bold", [jgd E2E]) #v(0.2em) #text(size: 0.58em, fill: muted, [resizeなどを自動検証])],
+    [#text(size: 0.78em, weight: "bold", [headless browser]) #v(0.2em) #text(size: 0.55em, fill: muted, [描画・リサイズ])],
   )
   #v(1.0em)
-  #text(size: 0.72em, [arfのHeadlessモードを追加したことで、jgdのテストを自動化できました。])
+  #feature-list(
+    [ブラウザをリサイズ → Rでプロット関数を実行 → 再描画を確認],
+    [コーディングエージェントがRとブラウザの両方を操作・観測でき、開発・デバッグが効率化],
+  )
 ]

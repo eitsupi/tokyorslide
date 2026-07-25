@@ -9,7 +9,17 @@
     #text(size: 1.0em, weight: "bold", [radianを置き換えたい])
     #v(0.7em)
     #feature-list(
-      [radianを何年も使っていたが、Python製なのが嫌だった],
+      [
+        radianを何年も使っていたが、Python製なのが嫌だった
+        #v(0.2em)
+        #list(
+          marker: [–],
+          indent: 1em,
+          body-indent: 0.45em,
+          [インストール面倒（uv使えば今は楽ですが）],
+          [Windows上の文字コード問題],
+        )
+      ],
       [「ArkとNushellを組み合わせればできるのでは？」というところから開始、 \ なのでRust製],
     )
   ]
