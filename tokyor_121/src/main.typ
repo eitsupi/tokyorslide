@@ -6,11 +6,8 @@
 #set par(leading: 0.72em)
 
 #import "@preview/touying:0.7.4": *
-#import "@preview/numbly:0.1.0": numbly
 #import "theme.typ": deck-theme
 #import "components.typ": *
-
-#set heading(numbering: numbly("{1}.", default: "1.1"))
 
 #show: deck-theme.with(
   config-info(
