@@ -4,13 +4,13 @@
 #import "@preview/touying:0.7.4": *
 
 #slide(title: none, header: none, footer: none, align: left + horizon)[
-  #text(size: 0.67em, fill: accent, [Tokyo.R #122 · 2026-10-03])
+  #text(size: 0.88em, fill: accent, [Tokyo.R #122 · 2026-10-03])
   #v(0.65em)
-  #text(size: 2.6em, weight: "bold", fill: ink, [ADBC])
+  #text(size: 2.6em, weight: "bold", fill: ink, [ADBC最前線？])
   #v(0.15em)
-  #text(size: 1.28em, fill: ink, [Arrow時代のデータベース接続])
+  #text(size: 1.28em, fill: ink, [Apache Arrow時代のデータベース接続])
   #v(0.92em)
-  #text(size: 0.72em, fill: muted, [\@eitsupi])
+  #text(size: 0.88em, fill: muted, [\@eitsupi])
 ]
 
 // 自己紹介の内容は第121回からコピー。発表者が更新するためのページ。

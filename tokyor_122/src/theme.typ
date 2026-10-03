@@ -40,7 +40,7 @@
   ),
   config-page(
     fill: paper,
-    margin: (top: 3.05em, bottom: 0.95em, x: 2.2em),
+    margin: (top: 3.65em, bottom: 0.35em, x: 2.2em),
   ),
   config-store(
     navigation: none,

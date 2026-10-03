@@ -6,14 +6,14 @@
   v(0.38em)
   line(length: 100%, stroke: 0.5pt + line-color)
   v(0.16em)
-  text(size: 9pt, fill: muted, body)
+  text(size: 11.5pt, fill: muted, body)
 }
 
 #let note(body) = block(
   width: 100%,
   inset: (left: 0.6em, y: 0.17em),
   stroke: (left: 3pt + warm),
-  text(size: 0.78em, body),
+  text(size: 0.88em, body),
 )
 
 #let cell(body, sub: none, color: ink) = block(
@@ -21,10 +21,10 @@
   fill: panel,
   inset: (x: 0.55em, y: 0.40em),
   align(center, [
-    #text(size: 0.80em, weight: "bold", fill: color, body)
+    #text(size: 0.88em, weight: "bold", fill: color, body)
     #if sub != none {
       v(0.10em)
-      text(size: 0.60em, fill: muted, sub)
+      text(size: 0.72em, fill: muted, sub)
     }
   ]),
 )
@@ -42,7 +42,7 @@
 
 #let code-panel(body) = block(
   width: 100%,
-  fill: rgb("#10151d"),
+  fill: rgb("#edf2f6"),
   inset: (x: 0.7em, y: 0.55em),
-  text(size: 0.63em, fill: ink, body),
+  text(size: 0.69em, fill: rgb("#172331"), body),
 )

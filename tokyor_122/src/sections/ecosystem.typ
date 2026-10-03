@@ -3,19 +3,19 @@
 #import "../slide-components.typ": *
 #import "@preview/touying:0.7.4": *
 
-#section-title([], [ADBCのこの1年], subtitle: [driverを作る・配る・使う])
+#section-title([], [ADBCのこの1年])
 
 #slide(title: [driverは言語をまたいで使える])[
   #align(center, cell([Goで実装したSnowflake driver]))
   #down()
+  #v(-0.35em)
   #align(center, cell([shared library], sub: [.so / .dylib / .dll], color: warm))
   #down()
+  #v(-0.35em)
   #align(center, cell([ADBC Driver Manager], sub: [動的にload]))
-  #v(0.30em)
-  #grid(columns: (1fr, 1fr, 1fr), column-gutter: 0.50em,
-    cell([R]), cell([Python]), cell([Rust]),
-  )
-  #sources([#source([ADBC Drivers], "https://arrow.apache.org/adbc/current/driver/index.html") · #source([ADBC Glossary], "https://arrow.apache.org/adbc/current/glossary.html") · #source([Snowflake driver source], "https://github.com/adbc-drivers/snowflake")])
+  #v(0.10em)
+  #align(center, cell([さまざまな言語・アプリのADBC client]))
+  #sources([#source([ADBC Drivers], "https://arrow.apache.org/adbc/current/driver/index.html") · 接続例：#source([ADBC公式ドキュメント], "https://arrow.apache.org/adbc/current/") ／ #source([Columnar社 adbc-quickstarts], "https://github.com/columnar-tech/adbc-quickstarts")])
 ]
 
 #slide(title: [driverをどう配る？])[
@@ -27,7 +27,7 @@
   #v(0.63em)
   #code-panel(raw("dbc install sqlite\ndbc install snowflake", lang: "sh", block: true))
   #v(0.35em)
-  #text(size: 0.70em, fill: muted, [dbcはCLIとして使えるほか、0.3.0からGo libraryとしてアプリにも組み込める。])
+  #text(size: 0.82em, fill: muted, [dbcはCLIとして使えるほか、0.3.0からGo libraryとしてアプリにも組み込める。])
   #sources([#source([ADBC Drivers: installation], "https://arrow.apache.org/adbc/current/driver/index.html") · #source([dbc 0.3.0], "https://columnar.tech/blog/announcing-dbc-0.3.0/")])
 ]
 
@@ -40,30 +40,32 @@
   #v(0.31em)
   #label([2026.10.01], [dbc 0.3.1がリリース（一昨日）])
   #v(0.47em)
-  #text(size: 0.66em, fill: muted, [FoundryはApache Arrowから独立したcommunity project。Apache ArrowはADBCのcore/specを維持。])
-  #sources([#source([Columnar launch], "https://columnar.tech/blog/announcing-columnar/") · #source([dbc 0.3.0], "https://columnar.tech/blog/announcing-dbc-0.3.0/") · #source([ADBC 24], "https://arrow.apache.org/blog/2026/07/28/adbc-24-release/") · #source([dbc 0.3.1], "https://columnar.tech/blog/dbc-0.3.1/")])
+  #text(size: 0.80em, fill: muted, [FoundryはApache Arrowから独立したcommunity project。Apache ArrowはADBCのcore/specを維持。])
+  #sources([#source([Columnar社ローンチ], "https://columnar.tech/blog/announcing-columnar/") · #source([dbc 0.3.0], "https://columnar.tech/blog/announcing-dbc-0.3.0/") · #source([ADBC 24], "https://arrow.apache.org/blog/2026/07/28/adbc-24-release/") · #source([dbc 0.3.1], "https://columnar.tech/blog/dbc-0.3.1/")])
 ]
 
 #slide(title: [dbt v2もADBCを採用])[
   #grid(columns: (1fr, 1fr), column-gutter: 0.85em,
     [
-      #text(size: 0.77em, fill: muted, [dbt v1])
+      #text(size: 0.86em, fill: muted, [dbt v1])
       #v(0.38em)
       #cell([adapter A → 接続実装 A])
       #v(0.25em)
       #cell([adapter B → 接続実装 B])
     ],
     [
-      #text(size: 0.77em, fill: accent, [dbt v2])
+      #text(size: 0.86em, fill: accent, [dbt v2])
       #v(0.38em)
       #cell([dbt / Rust])
       #down()
+      #v(-0.22em)
       #cell([ADBC])
       #down()
+      #v(-0.22em)
       #cell([各DBのdriver], sub: [Go実装なども利用可能])
     ],
   )
-  #v(0.28em)
+  #v(0.10em)
   #note([cross-languageなdriver ABIが、製品の共通接続層に使われている。])
   #sources([#source([dbt: Arrow ADBC and dbt v2], "https://docs.getdbt.com/docs/dbt/adbc") · #source([dbt v2 GA], "https://docs.getdbt.com/blog/dbt-v2-is-ga")])
 ]
