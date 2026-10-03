@@ -12,8 +12,8 @@
 #let quiet-header(self) = {
   if self.store.title != none {
     block(width: 100%, height: 2.65em)[
-      #place(top + left, dy: 0.40em, text(size: 1.18em, weight: "bold", fill: ink, self.store.title))
-      #place(bottom + left, line(length: 100%, stroke: 0.8pt + line-color))
+      #place(top + left, dx: 2.2em, dy: 0.70em, text(size: 1.18em, weight: "bold", fill: ink, self.store.title))
+      #place(bottom + left, dx: 2.2em, line(length: 90%, stroke: 0.8pt + line-color))
     ]
   }
 }

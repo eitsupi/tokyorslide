@@ -56,11 +56,13 @@
     columns: (1fr, auto, 1fr), column-gutter: 0.75em, align: horizon,
     cell([アプリ・言語 N個], sub: [多様なクライアント]),
     text(size: 1.3em, fill: warm, [N × M]),
-    cell([データベース M個], sub: [PostgreSQL / Snowflake / ...]),
+    cell([データベース M個], sub: [さまざまな接続先]),
   )
-  #v(0.80em)
+  #v(0.72em)
+  #text(size: 0.86em, weight: "bold", [BigQuery · Snowflake · Databricks · PostgreSQL · DuckDB · SQLite …])
+  #v(0.68em)
   #note([ADBCはアプリとdriverの間の共通APIを定める。各DB向けのdriverはまだ必要。])
-  #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC Glossary], "https://arrow.apache.org/adbc/current/glossary.html")])
+  #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC Glossary], "https://arrow.apache.org/adbc/current/glossary.html") · #source([Columnar社 ADBC Quickstarts], "https://github.com/columnar-tech/adbc-quickstarts")])
 ]
 
 #slide(title: [ADBCは何を決める？])[

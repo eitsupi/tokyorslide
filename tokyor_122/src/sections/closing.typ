@@ -23,8 +23,8 @@
   #v(0.42em)
   #label([ADBC], [接続のN×M問題にArrow-nativeな共通API])
   #v(0.42em)
-  #label([この1年], [driver配布、dbt v2、Rでの利用が前進した])
-  #v(0.42em)
-  #label([Rでは], [接続方法・SQL方言・実行層を分けて考えるきっかけに])
-  #sources([#source([Apache Arrow Overview], "https://arrow.apache.org/overview/") · #source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([dbplyr 2.6.0], "https://opensource.posit.co/blog/2026-06-17_dbplyr-2-6-0/")])
+  #label([この1年], [driver配布とdbt v2採用。#linebreak()念願のdbplyrからの利用が可能に])
+  #v(1.1em)
+  #align(right, text(size: 1.8em, weight: "bold", [Enjoy!]))
+  #sources([#source([Apache Arrow Overview], "https://arrow.apache.org/overview/") · #source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC Drivers], "https://arrow.apache.org/adbc/current/driver/index.html") · #source([dbt v2], "https://docs.getdbt.com/docs/dbt/adbc") · #source([dbplyr 2.6.0], "https://opensource.posit.co/blog/2026-06-17_dbplyr-2-6-0/")])
 ]

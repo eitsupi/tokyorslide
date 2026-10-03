@@ -6,7 +6,7 @@
 #section-title([], [Rから使う])
 
 #slide(title: [いまのRでの経路])[
-  #grid(columns: (0.37fr, 0.63fr), row-gutter: 0.52em, column-gutter: 0.35em,
+  #grid(columns: (0.37fr, 0.63fr), row-gutter: 0.94em, column-gutter: 0.35em,
     text(fill: accent, weight: "bold", [dplyr → dbplyr]), [操作をSQLへ翻訳],
     text(fill: accent, weight: "bold", [DBI → adbi]), [DBI互換の接続・実行],
     text(fill: accent, weight: "bold", [adbcdrivermanager]), [driverをload],
