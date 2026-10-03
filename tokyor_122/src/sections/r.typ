@@ -9,8 +9,8 @@
   #grid(columns: (0.37fr, 0.63fr), row-gutter: 0.94em, column-gutter: 0.35em,
     text(fill: accent, weight: "bold", [dplyr → dbplyr]), [操作をSQLへ翻訳],
     text(fill: accent, weight: "bold", [DBI → adbi]), [DBI互換の接続・実行],
-    text(fill: accent, weight: "bold", [adbcdrivermanager]), [driverをload],
-    text(fill: accent, weight: "bold", [ADBC driver]), [接続先DBと通信],
+    text(fill: accent, weight: "bold", [adbcdrivermanager]), [ドライバーを読み込む],
+    text(fill: accent, weight: "bold", [ADBCドライバー]), [接続先DBと通信],
   )
   #v(0.68em)
   #note([adbiのおかげで、既存のdplyr / dbplyrコードからADBCを利用できる。])
@@ -26,15 +26,15 @@
   #sources([#source([ADBC Drivers], "https://arrow.apache.org/adbc/current/driver/index.html") · #source([adbi README], "https://github.com/r-dbi/adbi")])
 ]
 
-#slide(title: [connection class = DBの種類、だった])[
+#slide(title: [接続クラス = DBの種類、だった])[
   #grid(columns: (1fr, 1fr), column-gutter: 0.80em,
     [
       #text(size: 0.85em, fill: muted, [従来の自然な前提])
       #v(0.30em)
-      #cell([RPostgresConnection]) #down() #cell([PostgreSQL dialect], color: warm)
+      #cell([RPostgresConnection]) #down() #cell([PostgreSQL方言], color: warm)
     ],
     [
-      #text(size: 0.85em, fill: accent, [genericな接続では])
+      #text(size: 0.85em, fill: accent, [汎用の接続APIでは])
       #v(0.30em)
       #cell([AdbiConnection]) #down() #cell([PostgreSQL / SQLite / Snowflake], color: warm)
     ],
@@ -47,11 +47,11 @@
 #slide(title: [dbplyr 2.6.0でSQL方言を分離])[
   #align(center, cell([AdbiConnection]))
   #down()
-  #align(center, cell([ADBC_INFO_VENDOR_NAME], sub: [driverにvendorを問い合わせる], color: warm))
+  #align(center, cell([ADBC_INFO_VENDOR_NAME], sub: [ドライバーに接続先の製品名を問い合わせる], color: warm))
   #down()
   #align(center, cell([sql_dialect()], sub: [PostgreSQL → dialect_postgres() など], color: accent))
   #v(0.45em)
-  #text(size: 0.80em, fill: muted, [dbplyrのAdbiConnection backendはvendor名から方言を選ぶ。未認識vendorは汎用方言へ。])
+  #text(size: 0.80em, fill: muted, [dbplyrは接続先の製品名からSQL方言を選ぶ。未対応の製品名なら汎用方言へ。])
   #sources([#source([dbplyr backend-adbc.R], "https://github.com/tidyverse/dbplyr/blob/main/R/backend-adbc.R") · #source([dbplyr sql-dialect.R], "https://github.com/tidyverse/dbplyr/blob/main/R/sql-dialect.R")])
 ]
 
@@ -61,9 +61,9 @@
   #code-panel(raw("con <- DBI::dbConnect(\n  adbi::adbi(\n    adbcdrivermanager::adbc_driver(\"sqlite\")\n  ),\n  uri = \":memory:\"\n)", lang: "r", block: true))
   #v(0.36em)
   #grid(columns: (1fr, 1fr, 1fr), column-gutter: 0.45em,
-    [#text(size: 0.80em, fill: accent, weight: "bold", [adbcdrivermanager]) #v(0.08em) #text(size: 0.75em, [driverを指定])],
+    [#text(size: 0.80em, fill: accent, weight: "bold", [adbcdrivermanager]) #v(0.08em) #text(size: 0.75em, [ドライバーを指定])],
     [#text(size: 0.80em, fill: accent, weight: "bold", [adbi]) #v(0.08em) #text(size: 0.75em, [DBIにつなぐ])],
-    [#text(size: 0.80em, fill: accent, weight: "bold", [DBI]) #v(0.08em) #text(size: 0.75em, [connectionを作る])],
+    [#text(size: 0.80em, fill: accent, weight: "bold", [DBI]) #v(0.08em) #text(size: 0.75em, [接続を作る])],
   )
   #v(0.28em)
   #note([adbiは有用な互換レイヤー。ただ、dbplyrからADBCへ進む実行経路は複雑。])

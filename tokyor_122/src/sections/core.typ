@@ -26,7 +26,7 @@
 ]
 
 #slide(title: [Apache Arrowが標準化したもの])[
-  #label([columnar], [列ごとに並ぶメモリ上のデータ形式])
+  #label([列指向], [列ごとに並ぶメモリ上のデータ形式])
   #v(0.42em)
   #label([言語非依存], [言語をまたぐ共通の表現])
   #v(0.42em)
@@ -61,21 +61,32 @@
   #v(0.72em)
   #text(size: 0.86em, weight: "bold", [BigQuery · Snowflake · Databricks · PostgreSQL · DuckDB · SQLite …])
   #v(0.68em)
-  #note([ADBCはアプリとdriverの間の共通APIを定める。各DB向けのdriverはまだ必要。])
-  #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC Glossary], "https://arrow.apache.org/adbc/current/glossary.html") · #source([Columnar社 ADBC Quickstarts], "https://github.com/columnar-tech/adbc-quickstarts")])
+  #note([各アプリ・言語がDBごとの接続方式を直接扱うと、組み合わせごとに実装が必要。])
+  #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([Apache Arrow公式: Introducing ADBC], "https://arrow.apache.org/blog/2023/01/05/introducing-arrow-adbc/") · #source([Columnar社 ADBC Quickstarts], "https://github.com/columnar-tech/adbc-quickstarts")])
+]
+
+#slide(title: [ADBCは接続の共通API])[
+  #text(size: 0.88em, [アプリは同じADBC APIを使い、接続先ごとの差はドライバーが受け持つ。])
+  #v(0.34em)
+  #align(center, rect(width: 70%, fill: white, inset: 0.10em)[
+    #image("../../assets/adbc-overview.svg", width: 100%, height: 11.3em, fit: "contain")
+  ])
+  #v(0.30em)
+  #note([図中のFlight SQLは接続先への経路の一例。ADBCが通信方式を決めるわけではない。])
+  #sources([図の出典：#source([Apache Arrow公式: Introducing ADBC], "https://arrow.apache.org/blog/2023/01/05/introducing-arrow-adbc/")])
 ]
 
 #slide(title: [ADBCは何を決める？])[
   #text(size: 0.92em, weight: "bold", fill: accent, [Arrow Database Connectivity])
   #v(0.22em)
-  #text(size: 0.86em, [Arrow-nativeなdatabase client API])
+  #text(size: 0.86em, [Apache Arrowを共通形式にしたデータベース接続API])
   #v(0.70em)
   #grid(columns: (1fr, 1fr, 1fr), column-gutter: 0.35em, row-gutter: 0.35em,
-    cell([connection]), cell([statement]), cell([query execution]),
-    cell([metadata]), cell([transaction]), cell([bulk ingest]),
+    cell([接続]), cell([ステートメント]), cell([クエリ実行]),
+    cell([メタデータ]), cell([トランザクション]), cell([一括投入]),
   )
   #v(0.56em)
-  #note([SQL dialectも、clientとDBの通信方式も定義しない。])
+  #note([SQL方言も、クライアントとDBの通信方式も定義しない。])
   #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC API Standard], "https://arrow.apache.org/adbc/current/format/specification.html")])
 ]
 
@@ -92,26 +103,26 @@
   #sources([#source([Columnar社: Announcing Columnar (2025-10-29)], "https://columnar.tech/blog/announcing-columnar/")])
 ]
 
-#slide(title: [3つともdatabase client API])[
+#slide(title: [3つともデータベース接続API])[
   #v(0.18em)
   #grid(columns: (0.18fr, 0.82fr), row-gutter: 0.72em, column-gutter: 0.5em,
     text(weight: "bold", fill: accent, [JDBC]), [ResultSetが基本。行ベースのAPI。],
-    text(weight: "bold", fill: accent, [ODBC]), [行・列のbindingが可能。Apache Arrow形式は共通契約ではない。],
+    text(weight: "bold", fill: accent, [ODBC]), [行単位・列単位のデータ受け取りが可能。Apache Arrow形式は共通契約ではない。],
     text(weight: "bold", fill: accent, [ADBC]), [Apache Arrowをデータ交換の中心に置く。],
   )
   #v(0.70em)
-  #note([3つともwire protocolは決めない。ADBCはODBC/JDBCの全面的な置き換えを約束しない。])
+  #note([いずれも通信プロトコルは決めない。ADBCはODBC/JDBCの全面置換でもない。])
   #sources([#source([ADBC FAQ: Why not JDBC/ODBC?], "https://arrow.apache.org/adbc/current/faq.html")])
 ]
 
 #section-title([], [Flight SQLとの違い])
 
 #slide(title: [Flight SQLとは？])[
-  #text(size: 0.88em, [Apache Arrow Flightの上でSQLを扱う通信protocol。DB側にも対応が必要。])
+  #text(size: 0.88em, [Apache Arrow Flightの上でSQLを扱う通信プロトコル。DB側にも対応が必要。])
   #v(0.55em)
-  #align(center, cell([SQL client]))
+  #align(center, cell([SQLクライアント]))
   #down()
-  #align(center, cell([Flight SQL], sub: [SQL命令・metadata ＋ Apache Arrowのデータ], color: warm))
+  #align(center, cell([Flight SQL], sub: [SQL命令・メタデータ ＋ Apache Arrowのデータ], color: warm))
   #down()
   #align(center, cell([Flight SQL対応DB]))
   #sources([#source([Apache Arrow: Flight SQL specification], "https://arrow.apache.org/docs/format/FlightSql.html") · #source([Flight SQL発表（2022年）], "https://arrow.apache.org/blog/2022/02/16/introducing-arrow-flight-sql/")])
@@ -122,11 +133,11 @@
   #v(0.39em)
   #label([データ表現], [Apache Arrow])
   #v(0.38em)
-  #label([client API], [ADBC / ODBC / JDBC])
+  #label([クライアントAPI], [ADBC / ODBC / JDBC])
   #v(0.38em)
-  #label([wire protocol], [Flight SQL / PostgreSQL protocol / TDS / Quack])
+  #label([通信プロトコル], [Flight SQL / PostgreSQLプロトコル / TDS / Quack])
   #v(0.55em)
-  #note([ADBCはclient側のAPI。driverがどのprotocolでDBと話すかは決めない。])
+  #note([ADBCはクライアント側のAPI。ドライバーがDBと使う通信プロトコルは決めない。])
   #sources([#source([ADBC Glossary], "https://arrow.apache.org/adbc/current/glossary.html") · #source([ADBC FAQ: Flight SQL], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC？ Flight SQL？], "https://zenn.dev/yutannihilation/articles/48fec15ddc565d")])
 ]
 
@@ -134,8 +145,8 @@
   #align(center, cell([アプリ → ADBC API], color: accent))
   #down()
   #grid(columns: (1fr, 1fr), column-gutter: 0.80em,
-    [#cell([Flight SQL driver]) #down() #cell([Flight SQL protocol], color: warm) #down() #cell([Flight SQL対応DB])],
-    [#cell([Quack driver]) #down() #cell([Quack protocol], color: warm) #down() #cell([DuckDB server])],
+    [#cell([Flight SQLドライバー]) #down() #cell([Flight SQL], color: warm) #down() #cell([Flight SQL対応DB])],
+    [#cell([Quackドライバー]) #down() #cell([Quack], color: warm) #down() #cell([DuckDBサーバー])],
   )
   #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([Columnar社: Quack ADBC driver], "https://columnar.tech/blog/announcing-quack-adbc-driver/")])
 ]
@@ -162,6 +173,6 @@
   #v(0.57em)
   #text(size: 0.80em, fill: muted, [TPC-H lineitem 6,000万行のread。AWS Arm同一AZ、5回の中央値。サーバー実装も異なる特定条件での比較で、ADBC自体の性能比較ではない。])
   #v(0.38em)
-  #note([ADBCは通信方式を決めない。QuackもFlight SQLも、対応driverを通して使える。])
+  #note([ADBCは通信方式を決めない。QuackもFlight SQLも、対応ドライバーを通して使える。])
   #sources([#source([DuckDB: Quack remote protocol (2026-05-12)], "https://duckdb.org/2026/05/12/quack-remote-protocol")])
 ]

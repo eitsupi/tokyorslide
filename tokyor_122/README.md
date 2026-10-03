@@ -8,7 +8,7 @@
 typst compile --root . tokyor_122/src/main.typ tokyor_122/tokyor_122.pdf
 ```
 
-RのSQLite例を試す場合は、adbi、adbcdrivermanager、DBI、dplyr、dbplyr をインストールし、`dbc install sqlite` でdriverを導入した上で実行します。
+RのSQLite例を試す場合は、adbi、adbcdrivermanager、DBI、dplyr、dbplyrをインストールし、`dbc install sqlite`でドライバーを導入した上で実行します。
 
 ```sh
 Rscript tokyor_122/example.R
