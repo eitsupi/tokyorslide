@@ -22,10 +22,17 @@
       #v(0.35em)
       #feature-list(
         [本業：手料理サブスク Tsuklio のデータ周り],
-        [副業：Columnar社でApache Arrow ADBC周りの開発],
+        [
+          副業：Columnar社でApache Arrow ADBC周りの開発
+          #v(0.2em)
+          #list(
+            marker: [-],
+            indent: 1em,
+            body-indent: 0.45em,
+            [本資料は個人の見解であり所属組織とは関係ありません（※言ってみたかった）],
+          )
+        ],
         [Excelが嫌になりRを使い始めて7年],
-        [Rockerプロジェクト（Shell、R、Docker）],
-        [Polars Rパッケージ（R、Rust）],
         [
           近況
           #v(0.2em)

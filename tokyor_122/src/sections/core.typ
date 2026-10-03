@@ -93,14 +93,14 @@
 #section-title([], [ODBC / JDBCとの違い])
 
 #slide(title: [30年続く接続API])[
-  #label([1995], [ODBCはすでに利用されていた])
+  #label([1992], [ODBC 1.0が登場])
   #v(0.50em)
   #label([1996], [JDBCが登場])
   #v(0.50em)
   #label([2022ごろ], [Apache Arrowを土台にADBCが生まれる])
   #v(0.78em)
   #note([Columnar社のローンチ記事は「接続規格が長く使われる」ことから話を始める。])
-  #sources([#source([Columnar社: Announcing Columnar (2025-10-29)], "https://columnar.tech/blog/announcing-columnar/")])
+  #sources([#source([Microsoft: 1992年の製品史], "https://learn.microsoft.com/en-us/shows/history/history-of-microsoft-1992") · #source([Columnar社: Announcing Columnar (2025-10-29)], "https://columnar.tech/blog/announcing-columnar/")])
 ]
 
 #slide(title: [3つともデータベース接続API])[

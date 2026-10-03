@@ -21,7 +21,7 @@
 #slide(title: [まとめ])[
   #label([Apache Arrow], [データ表現のN×M問題に共通形式を用意した])
   #v(0.42em)
-  #label([ADBC], [接続のN×M問題にApache Arrowを受け渡す共通API])
+  #label([ADBC], [接続のN×Mを減らすApache Arrowベースの共通API。#linebreak()通信プロトコルは規定しない])
   #v(0.42em)
   #label([この1年], [ドライバー配布とdbt v2採用。#linebreak()念願のdbplyrからの利用が可能に])
   #v(1.1em)

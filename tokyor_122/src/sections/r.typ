@@ -27,7 +27,7 @@
   #sources([#source([ADBC Drivers], "https://arrow.apache.org/adbc/current/driver/index.html") · #source([adbi README], "https://github.com/r-dbi/adbi")])
 ]
 
-#slide(title: [接続クラスによる抽象化の欠点])[
+#slide(title: [接続クラスとSQL方言を結び付ける限界])[
   #grid(columns: (1fr, 1fr), column-gutter: 0.80em,
     [
       #text(size: 0.85em, fill: muted, [従来の自然な前提])
@@ -52,7 +52,7 @@
   #down()
   #align(center, cell([sql_dialect()], sub: [PostgreSQL → dialect_postgres() など], color: accent))
   #v(0.45em)
-  #text(size: 0.80em, fill: muted, [dbplyrは接続先の製品名からSQL方言を選ぶ。未対応の製品名なら汎用方言へ。])
+  #text(size: 0.80em, fill: muted, [dbplyrは接続先の製品名からSQL方言を選ぶ。未対応なら汎用ODBC方言のdialect_odbc()へ。])
   #sources([#source([dbplyr backend-adbc.R], "https://github.com/tidyverse/dbplyr/blob/main/R/backend-adbc.R") · #source([dbplyr sql-dialect.R], "https://github.com/tidyverse/dbplyr/blob/main/R/sql-dialect.R")])
 ]
 
@@ -68,6 +68,6 @@
   )
   #v(0.16em)
   #note([adbiは有用な互換レイヤー。ただ、dbplyrからADBCへ進む実行経路は複雑。])
-  #text(size: 0.80em, fill: accent, [→ 個人的には、dbplyrがadbcdrivermanagerの接続を直接使えるとうれしい。])
+  #text(size: 0.80em, fill: accent, [→ 個人的には、dbplyrがADBCをDBIと並ぶ実行バックエンドとして直接扱えるとうれしい。])
   #sources([#source([adbi README], "https://github.com/r-dbi/adbi") · #source([ADBC R client], "https://arrow.apache.org/adbc/current/r/index.html")])
 ]
