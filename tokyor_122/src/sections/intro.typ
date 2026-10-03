@@ -26,7 +26,18 @@
         [Excelが嫌になりRを使い始めて7年],
         [Rockerプロジェクト（Shell、R、Docker）],
         [Polars Rパッケージ（R、Rust）],
-        [最近はarfの人],
+        [
+          近況
+          #v(0.2em)
+          #list(
+            marker: [-],
+            indent: 1em,
+            body-indent: 0.45em,
+            [arf等のR関連ツール開発],
+            [Rコンソーシアムの助成金応募してみた],
+            [停滞していたvscode-Rの3.0.0リリース関与],
+          )
+        ],
       )
     ],
     ratio: (0.30fr, 0.70fr),

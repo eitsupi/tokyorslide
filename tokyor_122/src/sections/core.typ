@@ -21,7 +21,7 @@
     ],
   )
   #v(0.40em)
-  #note([Apache Arrowを中心に受け渡すと、個別のCopy & Convertを減らせる。])
+  #note([Apache Arrowでやり取りすることで複製・変換処理を減らせる。])
   #sources([図の出典：#source([Apache Arrow公式Overview], "https://arrow.apache.org/overview/")])
 ]
 
@@ -86,7 +86,7 @@
     cell([メタデータ]), cell([トランザクション]), cell([一括投入]),
   )
   #v(0.56em)
-  #note([SQL方言も、クライアントとDBの通信方式も定義しない。])
+  #note([SQL方言もクライアントとDBの通信方式も定義しない。])
   #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC API Standard], "https://arrow.apache.org/adbc/current/format/specification.html")])
 ]
 
@@ -141,7 +141,7 @@
   #sources([#source([ADBC Glossary], "https://arrow.apache.org/adbc/current/glossary.html") · #source([ADBC FAQ: Flight SQL], "https://arrow.apache.org/adbc/current/faq.html") · #source([ADBC？ Flight SQL？], "https://zenn.dev/yutannihilation/articles/48fec15ddc565d")])
 ]
 
-#slide(title: [Flight SQLとADBCは競合しない])[
+#slide(title: [Flight SQLはADBC経由で利用可能])[
   #align(center, cell([アプリ → ADBC API], color: accent))
   #down()
   #grid(columns: (1fr, 1fr), column-gutter: 0.80em,
@@ -151,7 +151,7 @@
   #sources([#source([ADBC FAQ], "https://arrow.apache.org/adbc/current/faq.html") · #source([Columnar社: Quack ADBC driver], "https://columnar.tech/blog/announcing-quack-adbc-driver/")])
 ]
 
-#slide(title: [Flight SQLにも設計上のトレードオフ])[
+#slide(title: [Flight SQLの設計上のトレードオフ])[
   #text(size: 0.86em, [2022年登場のFlight SQL。クエリの結果取得には、少なくとも2回の通信が必要。])
   #v(0.58em)
   #align(center, cell([① GetFlightInfo], sub: [SQLを送り、結果の取得先を受け取る]))
@@ -160,7 +160,7 @@
   #v(0.57em)
   #note([小さなクエリを多数実行する用途では、この2往復は効率が悪い。])
   #text(size: 0.80em, fill: muted, [仕様見直しのissue「Flight SQL evolution」は2024年に作成され、現在もopen。])
-  #sources([#source([Flight SQL specification], "https://arrow.apache.org/docs/format/FlightSql.html") · #source([DuckDB: Why Not Arrow Flight SQL?], "https://duckdb.org/2026/05/12/quack-remote-protocol") · #source([Apache Arrow #41840], "https://github.com/apache/arrow/issues/41840")])
+  #sources([#source([Flight SQL specification], "https://arrow.apache.org/docs/format/FlightSql.html") · #source([DuckDB: Why Not Arrow Flight SQL?], "https://duckdb.org/2026/05/12/quack-remote-protocol") · #source([Apache Arrow \#41840], "https://github.com/apache/arrow/issues/41840")])
 ]
 
 #slide(title: [Flight SQLがいつも最速とは限らない])[
