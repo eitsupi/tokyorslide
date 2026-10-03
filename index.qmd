@@ -17,3 +17,4 @@ title: "資料"
 - [第115回R勉強会@東京（#TokyoR）応用セッション R-universeとR-multiverse](./tokyor_115/index.html)
 - [Japan.R 2025　新しいpolarsパッケージの紹介](./japanr2025/index.html)
 - [第121回R勉強会@東京（#TokyoR）応用セッション ここ半年くらいでAIに作らせたR用ツール](./tokyor_121/tokyor_121.pdf)
+- [第122回R勉強会@東京（#TokyoR）応用セッション ADBC最前線？](./tokyor_122/tokyor_122.pdf)
